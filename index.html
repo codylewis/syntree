@@ -12,12 +12,32 @@
 		<link rel="icon" href="data:," />
 		<link rel="stylesheet" href="css/bootstrap.min.css" />
 		<link rel="stylesheet" href="css/style.css" />
+		<script type="text/javascript">
+			// Runs before the page renders so a dark theme doesn't flash white first.
+			// Uses the saved theme, or the system setting if none has been chosen yet.
+			function current_theme() {
+				try {
+					var saved = localStorage.getItem("theme");
+					if (saved) return saved;
+				} catch (err) {}
+				return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+			}
+
+			function apply_theme(theme) {
+				document.documentElement.setAttribute("data-bs-theme", theme);
+			}
+
+			apply_theme(current_theme());
+		</script>
 	</head>
 
 	<body>
 		<header id="title">
 			<h1>Syntax Tree Generator</h1>
-			<a href="https://github.com/codylewis/syntree" class="link-secondary">GitHub</a>
+			<div id="title-links">
+				<button type="button" id="theme" class="btn btn-link link-secondary">Theme: Light</button>
+				<a href="https://github.com/codylewis/syntree" class="link-secondary">GitHub</a>
+			</div>
 		</header>
 
 		<div id="layout">
@@ -27,6 +47,7 @@
 						<textarea
 							id="i"
 							class="form-control"
+							data-bs-theme="light"
 							rows="8"
 							spellcheck="false"
 							aria-label="Labelled bracket notation"
@@ -518,6 +539,20 @@
 				}, 1500);
 			}
 
+			function show_theme(theme) {
+				$("#theme").text("Theme: " + theme.charAt(0).toUpperCase() + theme.slice(1));
+			}
+
+			function toggle_theme() {
+				var theme = current_theme() == "dark" ? "light" : "dark";
+				try {
+					localStorage.setItem("theme", theme);
+				} catch (err) {}
+				apply_theme(theme);
+				show_theme(theme);
+				return false;
+			}
+
 			function tree_link() {
 				var loc = window.location.href.replace(window.location.search, "");
 				return loc + "?i=" + encodeURIComponent(document.getElementById("i").value);
@@ -623,6 +658,7 @@
 				} catch (err) {}
 
 				show_slider_values();
+				show_theme(current_theme());
 				handler();
 
 				// Events
@@ -668,6 +704,7 @@
 				});
 				$("#copy-tree").click(copy_tree);
 				$("#copy-link").click(copy_link);
+				$("#theme").click(toggle_theme);
 				$("input[type=range]").bind("input", function () {
 					show_slider_values();
 					handler();
