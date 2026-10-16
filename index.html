@@ -248,13 +248,6 @@
 											for="auto-close"
 											>Auto-close [ ]</label
 										>
-										<button
-											type="button"
-											id="make-link"
-											class="btn btn-sm btn-outline-secondary"
-										>
-											Link
-										</button>
 									</div>
 								</div>
 							</div>
@@ -283,8 +276,9 @@
 								<p>
 									Use labelled bracket notation. This app will build the tree as
 									you type and will attempt to close any brackets that you may be
-									missing. Save the image to your computer by right-clicking on it
-									and selecting "Save image as". For more information, including
+									missing. Use Copy tree to paste the tree into a document, or
+									Copy link to share it. To save it as a file, right-click the
+									tree and choose "Save image as". For more information, including
 									on how to draw movement lines, visit the
 									<a href="https://github.com/mshang/syntree/wiki">wiki</a>.
 								</p>
@@ -339,8 +333,17 @@
 
 			<div id="tree-panel">
 				<div id="image-goes-here"></div>
-				<div id="tree-status" role="status" aria-live="polite"></div>
-				<button type="button" id="copy-tree" class="btn btn-sm btn-light">Copy tree</button>
+				<div id="tree-footer">
+					<div id="tree-status" role="status" aria-live="polite"></div>
+					<div id="tree-actions">
+						<button type="button" id="copy-link" class="btn btn-sm btn-light">
+							Copy link
+						</button>
+						<button type="button" id="copy-tree" class="btn btn-sm btn-light">
+							Copy tree
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -380,7 +383,9 @@
 					var problem = check_input(str);
 					show_status(problem);
 					if (problem && problem.level == "empty") {
-						$("#image-goes-here").empty();
+						$("#image-goes-here")
+							.empty()
+							.append($('<p class="tree-hint"></p>').text(problem.text));
 						$("#copy-tree").prop("disabled", true);
 						return false;
 					}
@@ -472,8 +477,8 @@
 
 			function show_status(problem) {
 				var el = $("#tree-status");
-				el.removeClass("status-info status-warning status-error status-empty");
-				if (!problem) {
+				el.removeClass("status-info status-warning status-error");
+				if (!problem || problem.level == "empty") {
 					el.text("");
 					return;
 				}
@@ -487,16 +492,43 @@
 				});
 			}
 
+			// Briefly replace a button's label, e.g. with "Copied".
+			function flash(btn, text) {
+				if (!btn.label) btn.label = $(btn).text();
+				$(btn).text(text);
+				clearTimeout(btn.reset);
+				btn.reset = setTimeout(function () {
+					$(btn).text(btn.label);
+				}, 1500);
+			}
+
+			function tree_link() {
+				var loc = window.location.href.replace(window.location.search, "");
+				return loc + "?i=" + encodeURIComponent(document.getElementById("i").value);
+			}
+
+			function copy_link() {
+				var btn = this;
+				var link = tree_link();
+				var fallback = function () {
+					window.prompt("Link for this tree:", link);
+				};
+				if (!navigator.clipboard) {
+					fallback();
+					return false;
+				}
+				navigator.clipboard.writeText(link).then(function () {
+					flash(btn, "Copied");
+				}, fallback);
+				return false;
+			}
+
 			function copy_tree() {
 				var btn = this;
 				var img = $("#image-goes-here img")[0];
 				if (!img) return false;
 				var done = function (text) {
-					$(btn).text(text);
-					clearTimeout(btn.reset);
-					btn.reset = setTimeout(function () {
-						$(btn).text("Copy tree");
-					}, 1500);
+					flash(btn, text);
 				};
 				try {
 					var blob = fetch(img.src).then(function (r) {
@@ -612,16 +644,7 @@
 					return false;
 				});
 				$("#copy-tree").click(copy_tree);
-				$("#make-link").click(function () {
-					var loc = window.location.href;
-					loc = loc.replace(window.location.search, "");
-
-					window.prompt(
-						"Link for this tree:",
-						loc + "?i=" + encodeURIComponent(document.getElementById("i").value)
-					);
-					return false;
-				});
+				$("#copy-link").click(copy_link);
 				$("input[type=range]").bind("input", function () {
 					show_slider_values();
 					handler();
