@@ -453,9 +453,9 @@ function parse(str) {
 	return n;
 }
 
-function format_brackets(str, indent_unit) {
-	if (indent_unit == null) indent_unit = "  ";
-
+// Parse bracket notation loosely into a list of top-level nodes and text,
+// balancing any unmatched brackets first.
+function read_brackets(str) {
 	str = str.replace(/^\s+/, "");
 	var open = 0;
 	for (var i = 0; i < str.length; i++) {
@@ -499,6 +499,22 @@ function format_brackets(str, indent_unit) {
 		return node;
 	}
 
+	var parts = [];
+	while (pos < str.length) {
+		if (str[pos] == "[") {
+			parts.push(read_node());
+		} else {
+			var text = read_text();
+			if (text != "") parts.push(text);
+			if (str[pos] == "]") pos++;
+		}
+	}
+	return parts;
+}
+
+function format_brackets(str, indent_unit) {
+	if (indent_unit == null) indent_unit = "  ";
+
 	function write_node(node, indent) {
 		var has_phrase = false;
 		for (var i = 0; i < node.children.length; i++)
@@ -517,15 +533,27 @@ function format_brackets(str, indent_unit) {
 		return out + "\n" + indent + "]";
 	}
 
-	var parts = [];
-	while (pos < str.length) {
-		if (str[pos] == "[") {
-			parts.push(write_node(read_node(), ""));
-		} else {
-			var text = read_text();
-			if (text != "") parts.push(text);
-			if (str[pos] == "]") pos++;
+	return read_brackets(str)
+		.map(function (part) {
+			return typeof part == "string" ? part : write_node(part, "");
+		})
+		.join("\n");
+}
+
+// Put the whole tree on one line, e.g. "[S [NP This] [VP [V is] [^NP a wug]]]".
+function minify_brackets(str) {
+	function write_node(node) {
+		var out = "[" + node.label;
+		for (var i = 0; i < node.children.length; i++) {
+			var child = node.children[i];
+			out += " " + (typeof child == "string" ? child : write_node(child));
 		}
+		return out + "]";
 	}
-	return parts.join("\n");
+
+	return read_brackets(str)
+		.map(function (part) {
+			return typeof part == "string" ? part : write_node(part);
+		})
+		.join(" ");
 }

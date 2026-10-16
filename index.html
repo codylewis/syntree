@@ -64,13 +64,30 @@
 							>
 						</div>
 						<div class="editor-tools">
-							<button
-								type="button"
-								id="format"
-								class="btn btn-sm btn-outline-secondary"
-							>
-								Format
-							</button>
+							<div class="btn-group">
+								<button
+									type="button"
+									id="format"
+									class="btn btn-sm btn-outline-secondary"
+								>
+									Format
+								</button>
+								<button
+									type="button"
+									class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split"
+									data-bs-toggle="dropdown"
+									aria-expanded="false"
+								>
+									<span class="visually-hidden">More formatting</span>
+								</button>
+								<ul class="dropdown-menu dropdown-menu-end">
+									<li>
+										<button type="button" id="minify" class="dropdown-item">
+											Minify
+										</button>
+									</li>
+								</ul>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -835,13 +852,13 @@
 				$(".redraw").change(function () {
 					return handler();
 				});
-				$("#format").click(function () {
+				$("#format, #minify").click(function () {
 					var ta = document.getElementById("i");
+					var rewrite = this.id == "minify" ? minify_brackets : format_brackets;
 					ta.select();
-					insert_text(ta, format_brackets(ta.value));
+					insert_text(ta, rewrite(ta.value));
 					fit_editor(true);
 					handler();
-					return false;
 				});
 				$(".example").click(function () {
 					var ta = document.getElementById("i");
