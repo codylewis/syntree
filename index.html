@@ -119,6 +119,7 @@
 
 	<div id="tree-panel">
 		<div id="image-goes-here"></div>
+		<div id="tree-status" role="status" aria-live="polite"></div>
 		<button type="button" id="copy-tree" class="btn btn-sm btn-light">Copy tree</button>
 	</div>
 	</div>
@@ -159,24 +160,72 @@ try {
 	
 	// Get the string.
 	var str = document.getElementById("i").value;
-	
-	/*$("#image-goes-here").text(str + ", " + font_size + ", " + 
-		term_font + ", " + nonterm_font + ", " + vert_space + ", " + hor_space);*/
+	var problem = check_input(str);
+	show_status(problem);
+	if (problem && problem.level == "empty") {
+		$("#image-goes-here").empty();
+		$("#copy-tree").prop("disabled", true);
+		return false;
+	}
+	if (problem && problem.level == "error") return false;
 	
 	var img = go(str, font_size, term_font, nonterm_font, vert_space, hor_space, color, term_lines);
 	$("#image-goes-here").empty();
 	$("#image-goes-here").append(img);
+	$("#copy-tree").prop("disabled", false);
 	
 } catch (err) {
-	if (debug) {
-		throw(err);
-	} else { 
-		if (err == "canvas")
-			$("#image-goes-here").text("Browser not supported.");
-	}
+	if (debug) console.error(err);
+	if (err == "canvas")
+		show_status({level: "error", text: "This browser can't draw trees."});
+	else
+		show_status({level: "error", text: "Couldn't draw this tree. Check the brackets near your last edit."});
 } // try-catch
 return false;
 } // handler()
+
+// Returns the most important problem with the input, or null if there is none.
+function check_input(str) {
+	if (/^\s*$/.test(str))
+		return {level: "empty", text: "Type a tree in labelled bracket notation, e.g. [S [NP Alice] [VP sleeps]]"};
+	if (!/^\s*\[/.test(str))
+		return {level: "error", text: "Start the tree with [ and a label, e.g. [S"};
+	
+	var open = 0;
+	var line = 1;
+	for (var i = 0; i < str.length; i++) {
+		if (str[i] == "\n") line++;
+		if (str[i] == "[") open++;
+		if (str[i] == "]") open--;
+		if (open < 0)
+			return {level: "warning", text: "Extra ] on line " + line + "."};
+		if (open == 0 && i < str.length - 1 && /\S/.test(str.substring(i + 1)))
+			return {level: "warning", text: "Text after the closing ] on line " + line + " is outside the tree."};
+	}
+	
+	var labels = {};
+	str.replace(/\[[^\s\[\]]*?_(\w+)(?=[\s\[\]])/g, function(match, label) {labels[label] = true;});
+	var tails = str.match(/<\w+>/g) || [];
+	for (var i = 0; i < tails.length; i++) {
+		var name = tails[i].slice(1, -1);
+		if (!labels[name])
+			return {level: "warning", text: "No node is labelled _" + name + " for " + tails[i] + ", so its movement line isn't drawn."};
+	}
+	
+	if (open > 0)
+		return {level: "info", text: open + (open == 1 ? " bracket is" : " brackets are") + " unclosed and will be closed automatically."};
+	return null;
+}
+
+function show_status(problem) {
+	var el = $("#tree-status");
+	el.removeClass("status-info status-warning status-error status-empty");
+	if (!problem) {
+		el.text("");
+		return;
+	}
+	el.addClass("status-" + problem.level).text(problem.text);
+}
 
 function show_slider_values() {
 	$("output.option-value").each(function() {
@@ -271,6 +320,7 @@ $(function() {
 	$("#i").keyup(function() {handler(); return true;});
 	$("#i").keydown(function() {handler(); return true;});
 	$("#i").change(function() {handler(); return true;});
+	$("#i").bind("input", function() {handler(); return true;});
 	$(".redraw").change(function() {return handler()});
 	$("#format").click(function() {
 		var ta = document.getElementById("i");

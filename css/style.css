@@ -48,3 +48,10 @@ a.example { font-family: var(--bs-font-monospace); font-size: 0.8125rem; text-de
 #image-goes-here img { max-width: 100%; height: auto; border: 1px solid var(--bs-border-color); border-radius: 6px; box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08); }
 #copy-tree { position: absolute; right: 12px; bottom: 12px; border: 1px solid var(--bs-border-color); box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); }
 .option-value { flex: 0 0 44px; text-align: right; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--bs-secondary-color); }
+
+#tree-status { position: absolute; left: 12px; right: 120px; bottom: 12px; min-height: 31px; display: flex; align-items: center; font-size: 0.8125rem; color: var(--bs-secondary-color); pointer-events: none; }
+#tree-status:empty { display: none; }
+#tree-status.status-warning, #tree-status.status-error { pointer-events: auto; padding: 4px 10px; border-radius: 6px; border: 1px solid; width: fit-content; max-width: calc(100% - 120px); }
+#tree-status.status-warning { color: #8a5a00; background: #fff8e6; border-color: #f3dca6; }
+#tree-status.status-error { color: #b42318; background: #fef3f2; border-color: #fbd0cc; }
+#tree-status.status-empty { right: 12px; bottom: auto; top: 0; height: 100%; justify-content: center; text-align: center; font-size: 0.875rem; }
