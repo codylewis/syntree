@@ -1,0 +1,4 @@
+*.min.js
+*.min.css
+js/base64.js
+js/canvas2image.js
