@@ -19,8 +19,8 @@
 
 
 <body>
-	<div id="accordion">
-		<h3><a href="#">Syntax Tree Generator</a></h3><div style="text-align:left">
+	<div id="editor" class="ui-accordion ui-widget ui-helper-reset">
+		<h3 class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top"><a>Syntax Tree Generator</a></h3><div class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active" style="text-align:left">
 			<textarea id="i" rows="8">[S
   [NP This]
   [VP
@@ -32,7 +32,9 @@
 				<a href="#" id="format">Format</a>
 			</div>
 		</div>
-		
+	</div>
+
+	<div id="accordion">
 		<h3><a href="#">Options</a></h3><div>
 			<table>
 				<col width="1*">
@@ -102,7 +104,7 @@
 
 <style type="text/css">
 body { font-size: small !important; font-family: sans-serif; margin: 20px; background-color: #ffffff}
-#accordion { margin: 0px auto; width: 500px; text-align: center; }
+#editor, #accordion { margin: 0px auto; width: 500px; text-align: center; }
 table { margin: 0px auto; }
 //.ui-widget { font-size:small !important; }
 td {font-size:small !important;}
@@ -229,7 +231,7 @@ $(function() {
 	$("#vert-space-slider").slider({value: 35, min: 35, max: 70, step: 5});
 	$("#hor-space-slider").slider({value: 10, min: 10, max: 50, step: 5});
 	$("#font-style-radio, #term-font-check, #nonterm-font-check").buttonset();
-	$("#accordion").accordion({collapsible: true, icons: false, autoHeight: false});
+	$("#accordion").accordion({collapsible: true, active: false, icons: false, autoHeight: false});
 	
 	try {
 		var qs = decodeURIComponent(window.location.search.slice(1));
