@@ -292,6 +292,17 @@
 										<input
 											type="checkbox"
 											class="btn-check"
+											id="auto-indent"
+											autocomplete="off"
+											checked
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="auto-indent"
+											>Auto-indent</label
+										>
+										<input
+											type="checkbox"
+											class="btn-check"
 											id="match-brackets"
 											autocomplete="off"
 											checked
@@ -859,6 +870,27 @@
 				return true;
 			}
 
+			// Starts the new line at the current line's indent, one level deeper if the line
+			// leaves a bracket open. Between a bracket and its partner, as after auto-close,
+			// the partner moves to its own line at the original indent.
+			function auto_indent_keydown(e) {
+				if (!document.getElementById("auto-indent").checked) return true;
+				if (e.which != 13 || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return true;
+				if (e.originalEvent && e.originalEvent.isComposing) return true;
+				var ta = this;
+				var start = ta.selectionStart;
+				var line = ta.value.substring(ta.value.lastIndexOf("\n", start - 1) + 1, start);
+				var indent = line.match(/^[ \t]*/)[0];
+				var open = (line.match(/\[/g) || []).length - (line.match(/\]/g) || []).length;
+				var text = "\n" + indent + (open > 0 ? "  " : "");
+				var caret = start + text.length;
+				if (open > 0 && ta.value[ta.selectionEnd] == "]") text += "\n" + indent;
+				e.preventDefault();
+				insert_text(ta, text);
+				ta.selectionStart = ta.selectionEnd = caret;
+				return true;
+			}
+
 			$(function () {
 				try {
 					var qs = decodeURIComponent(window.location.search.slice(1));
@@ -876,6 +908,7 @@
 				// Events
 				$("#i").keypress(auto_close_keypress);
 				$("#i").keydown(auto_close_keydown);
+				$("#i").keydown(auto_indent_keydown);
 				$("#i").keypress(function () {
 					handler();
 					return true;
