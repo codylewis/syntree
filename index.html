@@ -65,15 +65,18 @@
 					</div>
 					<div class="option-row">
 						<label class="option-label" for="font-size-slider">Font size</label>
-						<input type="range" class="form-range redraw" id="font-size-slider" min="8" max="16" step="1" value="12" />
+						<input type="range" class="form-range redraw" id="font-size-slider" min="8" max="16" step="1" value="12" data-unit="pt" />
+						<output class="option-value" for="font-size-slider"></output>
 					</div>
 					<div class="option-row">
-						<label class="option-label" for="vert-space-slider">Height</label>
-						<input type="range" class="form-range redraw" id="vert-space-slider" min="35" max="70" step="5" value="35" />
+						<label class="option-label" for="vert-space-slider">Vertical spacing</label>
+						<input type="range" class="form-range redraw" id="vert-space-slider" min="35" max="70" step="5" value="35" data-unit="px" />
+						<output class="option-value" for="vert-space-slider"></output>
 					</div>
 					<div class="option-row">
-						<label class="option-label" for="hor-space-slider">Width</label>
-						<input type="range" class="form-range redraw" id="hor-space-slider" min="10" max="50" step="5" value="10" />
+						<label class="option-label" for="hor-space-slider">Horizontal spacing</label>
+						<input type="range" class="form-range redraw" id="hor-space-slider" min="10" max="50" step="5" value="10" data-unit="px" />
+						<output class="option-value" for="hor-space-slider"></output>
 					</div>
 					<div class="option-row">
 						<span class="option-label">Display</span>
@@ -175,6 +178,13 @@ try {
 return false;
 } // handler()
 
+function show_slider_values() {
+	$("output.option-value").each(function() {
+		var slider = document.getElementById($(this).attr("for"));
+		$(this).text(slider.value + " " + $(slider).attr("data-unit"));
+	});
+}
+
 function copy_tree() {
 	var btn = this;
 	var img = $("#image-goes-here img")[0];
@@ -251,6 +261,7 @@ $(function() {
 		document.getElementById("i").value = qs;
 	} catch (err) {}
 	
+	show_slider_values();
 	handler();
 	
 	// Events
@@ -278,7 +289,7 @@ $(function() {
 			encodeURIComponent(document.getElementById("i").value));
 		return false;
 	});
-	$("input[type=range]").bind("input", function() {handler(); return true;});
+	$("input[type=range]").bind("input", function() {show_slider_values(); handler(); return true;});
 });
 </script>
 
