@@ -404,7 +404,7 @@
 								</p>
 								<h3>Key combinations</h3>
 								<ul class="key-combos">
-									<li><kbd>\0</kbd> ∅, the empty head</li>
+									<li><kbd>\0</kbd> ∅, an empty head</li>
 									<li>
 										<kbd>Shift</kbd>+<kbd>Enter</kbd> New line without indent
 									</li>
@@ -882,7 +882,7 @@
 				gutter.innerHTML = html;
 			}
 
-			// Typing \0 gives ∅, the empty head. Undo brings back the backslash.
+			// Typing \0 gives ∅, an empty head. Undo brings back the backslash.
 			function symbol_keypress(e) {
 				if (e.ctrlKey || e.metaKey || e.altKey) return true;
 				var ta = this;
