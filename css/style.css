@@ -135,10 +135,17 @@ body {
 .examples li + li {
 	margin-top: 4px;
 }
-a.example {
+.example {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--bs-link-color);
+	text-align: left;
 	font-family: var(--bs-font-monospace);
 	font-size: 0.8125rem;
-	text-decoration: none;
+}
+.example:hover {
+	color: var(--bs-link-hover-color);
 }
 
 #image-goes-here {

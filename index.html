@@ -294,35 +294,51 @@
 								<h3>Examples</h3>
 								<ul class="examples">
 									<li>
-										<a class="example" href="?i=[NP^ Alice]">[NP^ Alice]</a>
-									</li>
-									<li>
-										<a class="example" href="?i=[NP [N Alice] and [N Bob]]"
-											>[NP [N Alice] and [N Bob]]</a
-										>
-									</li>
-									<li>
-										<a
+										<button
+											type="button"
 											class="example"
-											href="?i=[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of physics"
-											>[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of
-											physics</a
+											data-example="[NP^ Alice]"
 										>
+											[NP^ Alice]
+										</button>
 									</li>
 									<li>
-										<a
+										<button
+											type="button"
 											class="example"
-											href="?i=[S [X_a Movement] [Y example &lt;a&gt;]]"
-											>[S [X_a Movement] [Y example &lt;a&gt;]]</a
+											data-example="[NP [N Alice] and [N Bob]]"
 										>
+											[NP [N Alice] and [N Bob]]
+										</button>
 									</li>
 									<li>
-										<a
+										<button
+											type="button"
 											class="example"
-											href="?i=[CP [NP^_1 What] [C' [C_b did] [IP_2 [NP^ you] [I' [I tr&lt;b&gt;] [VP [V' [V eat] tr&lt;1&gt;]]]]]]"
-											>[CP [NP^_1 What] [C' [C_b did] [IP_2 [NP^ you] [I' [I
-											tr&lt;b&gt;] [VP [V' [V eat] tr&lt;1&gt;]]]]]]</a
+											data-example="[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of physics"
 										>
+											[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of
+											physics
+										</button>
+									</li>
+									<li>
+										<button
+											type="button"
+											class="example"
+											data-example="[S [X_a Movement] [Y example &lt;a&gt;]]"
+										>
+											[S [X_a Movement] [Y example &lt;a&gt;]]
+										</button>
+									</li>
+									<li>
+										<button
+											type="button"
+											class="example"
+											data-example="[CP [NP^_1 What] [C' [C_b did] [IP_2 [NP^ you] [I' [I tr&lt;b&gt;] [VP [V' [V eat] tr&lt;1&gt;]]]]]]"
+										>
+											[CP [NP^_1 What] [C' [C_b did] [IP_2 [NP^ you] [I' [I
+											tr&lt;b&gt;] [VP [V' [V eat] tr&lt;1&gt;]]]]]]
+										</button>
 									</li>
 								</ul>
 							</div>
@@ -640,6 +656,13 @@
 					ta.select();
 					insert_text(ta, format_brackets(ta.value));
 					ta.rows = Math.min(Math.max(ta.value.split("\n").length, 8), 25);
+					handler();
+					return false;
+				});
+				$(".example").click(function () {
+					var ta = document.getElementById("i");
+					ta.select();
+					insert_text(ta, $(this).attr("data-example"));
 					handler();
 					return false;
 				});
