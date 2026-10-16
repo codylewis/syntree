@@ -308,6 +308,21 @@ body {
 	padding: 0;
 	margin: 0;
 }
+.key-combos {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	font-size: 0.9375rem;
+}
+.key-combos kbd {
+	padding: 1px 5px;
+	font-size: 0.75rem;
+	color: var(--bs-body-color);
+	background-color: var(--bs-tertiary-bg);
+	border: 1px solid var(--bs-border-color);
+	border-radius: 4px;
+}
+.key-combos li + li,
 .examples li + li {
 	margin-top: 4px;
 }

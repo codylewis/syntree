@@ -345,6 +345,21 @@
 										>
 									</div>
 								</div>
+								<div class="option-row">
+									<span class="option-label">Export</span>
+									<div class="option-buttons">
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="show-download-svg"
+											autocomplete="off"
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="show-download-svg"
+											>Download SVG</label
+										>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -373,8 +388,9 @@
 									you type and will attempt to close any brackets that you may be
 									missing. Use Copy tree to paste the tree into a document, or
 									Copy link to share it. To save it as a file, right-click the
-									tree and choose "Save image as". For more information, including
-									on how to draw movement lines, visit the
+									tree and choose "Save image as", or turn on Download SVG in
+									Options for a file that stays sharp at any size. For more
+									information, including on how to draw movement lines, visit the
 									<a href="https://github.com/mshang/syntree/wiki">wiki</a>.
 								</p>
 								<p>
@@ -386,6 +402,13 @@
 										>github.com/codylewis/syntree</a
 									>.
 								</p>
+								<h3>Key combinations</h3>
+								<ul class="key-combos">
+									<li><kbd>\0</kbd> ∅, the empty head</li>
+									<li>
+										<kbd>Shift</kbd>+<kbd>Enter</kbd> New line without indent
+									</li>
+								</ul>
 								<h3>Examples</h3>
 								<ul class="examples">
 									<li>
@@ -450,6 +473,9 @@
 						<button type="button" id="copy-link" class="btn btn-sm btn-light">
 							Copy link
 						</button>
+						<button type="button" id="download-svg" class="btn btn-sm btn-light d-none">
+							Download SVG
+						</button>
 						<button type="button" id="copy-tree" class="btn btn-sm btn-light">
 							Copy tree
 						</button>
@@ -464,6 +490,9 @@
 		<script type="text/javascript" src="js/canvas2image.js"></script>
 		<script type="text/javascript" src="js/syntree.js"></script>
 		<script type="text/javascript">
+			// The arguments the current tree was drawn with, so it can be drawn again as SVG.
+			var last_tree = null;
+
 			function handler() {
 				highlight_brackets();
 				try {
@@ -498,12 +527,12 @@
 						$("#image-goes-here")
 							.empty()
 							.append($('<p class="tree-hint"></p>').text(problem.text));
-						$("#copy-tree").prop("disabled", true);
+						$("#copy-tree, #download-svg").prop("disabled", true);
 						return false;
 					}
 					if (problem && problem.level == "error") return false;
 
-					var img = go(
+					var args = [
 						str,
 						font_size,
 						term_font,
@@ -511,11 +540,13 @@
 						vert_space,
 						hor_space,
 						color,
-						term_lines
-					);
+						term_lines,
+					];
+					var img = go.apply(null, args);
+					last_tree = args;
 					$("#image-goes-here").empty();
 					$("#image-goes-here").append(img);
-					$("#copy-tree").prop("disabled", false);
+					$("#copy-tree, #download-svg").prop("disabled", false);
 				} catch (err) {
 					if (debug) console.error(err);
 					if (err == "canvas")
@@ -671,6 +702,22 @@
 				} catch (err) {
 					done("Copy failed");
 				}
+				return false;
+			}
+
+			function download_svg() {
+				if (!last_tree) return false;
+				var svg = go.apply(null, last_tree.concat([true]));
+				var url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+				var a = document.createElement("a");
+				a.href = url;
+				a.download = "tree.svg";
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				setTimeout(function () {
+					URL.revokeObjectURL(url);
+				}, 1000);
 				return false;
 			}
 
@@ -835,6 +882,19 @@
 				gutter.innerHTML = html;
 			}
 
+			// Typing \0 gives ∅, the empty head. Undo brings back the backslash.
+			function symbol_keypress(e) {
+				if (e.ctrlKey || e.metaKey || e.altKey) return true;
+				var ta = this;
+				var start = ta.selectionStart;
+				if (String.fromCharCode(e.which) != "0" || start != ta.selectionEnd) return true;
+				if (ta.value[start - 1] != "\\") return true;
+				e.preventDefault();
+				ta.selectionStart = start - 1;
+				insert_text(ta, "∅");
+				return true;
+			}
+
 			function auto_close_keypress(e) {
 				if (!document.getElementById("auto-close").checked) return true;
 				if (e.ctrlKey || e.metaKey || e.altKey) return true;
@@ -906,6 +966,7 @@
 				fit_editor(false);
 
 				// Events
+				$("#i").keypress(symbol_keypress);
 				$("#i").keypress(auto_close_keypress);
 				$("#i").keydown(auto_close_keydown);
 				$("#i").keydown(auto_indent_keydown);
@@ -966,6 +1027,10 @@
 					return false;
 				});
 				$("#copy-tree").click(copy_tree);
+				$("#download-svg").click(download_svg);
+				$("#show-download-svg").change(function () {
+					$("#download-svg").toggleClass("d-none", !this.checked);
+				});
 				$("#copy-link").click(copy_link);
 				$("#theme").click(toggle_theme);
 				$("input[type=range]").bind("input", function () {

@@ -288,7 +288,138 @@ MovementLine.prototype.draw = function (ctx) {
 	ctx.fill();
 };
 
-function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, color, term_lines) {
+// Stands in for a canvas context and records what is drawn as SVG, so the SVG comes from the
+// same layout and drawing code as the PNG. It supports only the calls this file makes.
+function SvgContext(width, height) {
+	this.width = width;
+	this.height = height;
+	this.parts = [];
+	this.path = "";
+	this.dx = 0;
+	this.dy = 0;
+	this.font = "10px sans-serif";
+	this.fillStyle = "#000000";
+	this.strokeStyle = "#000000";
+	this.textAlign = "start";
+}
+
+function svg_escape(str) {
+	return String(str)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;");
+}
+
+SvgContext.prototype.point = function (x, y) {
+	return x + this.dx + " " + (y + this.dy);
+};
+
+SvgContext.prototype.translate = function (x, y) {
+	this.dx += x;
+	this.dy += y;
+};
+
+SvgContext.prototype.fillRect = function (x, y, w, h) {
+	this.parts.push(
+		'<rect x="' +
+			(x + this.dx) +
+			'" y="' +
+			(y + this.dy) +
+			'" width="' +
+			w +
+			'" height="' +
+			h +
+			'" fill="' +
+			svg_escape(this.fillStyle) +
+			'"/>'
+	);
+};
+
+SvgContext.prototype.fillText = function (text, x, y) {
+	var anchor = { center: "middle", right: "end", end: "end" }[this.textAlign] || "start";
+	this.parts.push(
+		'<text x="' +
+			(x + this.dx) +
+			'" y="' +
+			(y + this.dy) +
+			'" text-anchor="' +
+			anchor +
+			'" fill="' +
+			svg_escape(this.fillStyle) +
+			'" style="font: ' +
+			svg_escape(this.font) +
+			'" xml:space="preserve">' +
+			svg_escape(text) +
+			"</text>"
+	);
+};
+
+SvgContext.prototype.beginPath = function () {
+	this.path = "";
+};
+
+SvgContext.prototype.moveTo = function (x, y) {
+	this.path += "M" + this.point(x, y);
+};
+
+// As on a canvas, a line with no starting point just sets one.
+SvgContext.prototype.lineTo = function (x, y) {
+	this.path += (this.path ? "L" : "M") + this.point(x, y);
+};
+
+SvgContext.prototype.quadraticCurveTo = function (cx, cy, x, y) {
+	this.path += "Q" + this.point(cx, cy) + " " + this.point(x, y);
+};
+
+SvgContext.prototype.closePath = function () {
+	this.path += "Z";
+};
+
+// The drawing code strokes without starting new paths, which a canvas tolerates by
+// stroking the same lines again. Here each stroke or fill takes only what was drawn since.
+SvgContext.prototype.stroke = function () {
+	if (!this.path) return;
+	this.parts.push(
+		'<path d="' + this.path + '" fill="none" stroke="' + svg_escape(this.strokeStyle) + '"/>'
+	);
+	this.path = "";
+};
+
+SvgContext.prototype.fill = function () {
+	if (!this.path) return;
+	this.parts.push('<path d="' + this.path + '" fill="' + svg_escape(this.fillStyle) + '"/>');
+	this.path = "";
+};
+
+SvgContext.prototype.to_svg = function () {
+	return (
+		'<svg xmlns="http://www.w3.org/2000/svg" width="' +
+		this.width +
+		'" height="' +
+		this.height +
+		'" viewBox="0 0 ' +
+		this.width +
+		" " +
+		this.height +
+		'">' +
+		this.parts.join("") +
+		"</svg>"
+	);
+};
+
+// Returns the tree as a PNG image, or with as_svg as the text of an SVG file.
+function go(
+	str,
+	font_size,
+	term_font,
+	nonterm_font,
+	vert_space,
+	hor_space,
+	color,
+	term_lines,
+	as_svg
+) {
 	// Clean up the string
 	str = str.replace(/^\s+/, "");
 	var open = 0;
@@ -345,6 +476,7 @@ function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, colo
 	canvas.id = "canvas";
 	canvas.width = width;
 	canvas.height = height;
+	if (as_svg) ctx = new SvgContext(width, height);
 	ctx.fillStyle = "rgb(255, 255, 255)";
 	ctx.fillRect(0, 0, width, height);
 	ctx.fillStyle = "rgb(0, 0, 0)";
@@ -357,6 +489,7 @@ function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, colo
 	for (var i = 0; i < movement_lines.length; i++)
 		if (movement_lines[i].should_draw) movement_lines[i].draw(ctx);
 
+	if (as_svg) return ctx.to_svg();
 	// Swap out the image
 	return Canvas2Image.saveAsPNG(canvas, true);
 }
