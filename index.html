@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<meta http-equiv="X-UA-Compatible" content="IE=9" />
@@ -127,14 +128,15 @@ body { font-size: small !important; font-family: sans-serif; margin: 10px; backg
 }
 table { margin: 0px auto; }
 //.ui-widget { font-size:small !important; }
-td {font-size:small !important;}
-textarea {resize: vertical; width: 100%; min-height: 10em}
+td {font-size:small !important; line-height: normal;}
+textarea {resize: vertical; width: 100%; min-height: 10em; box-sizing: border-box; display: block}
 a.example { text-decoration: none; color: #4183C4!important; }
 .help {text-align: left;}
-#image-goes-here img { max-width: 100%; height: auto; box-sizing: border-box; border-radius: 6px; }
+#image-goes-here img { max-width: 100%; height: auto; box-sizing: border-box; border-radius: 6px; vertical-align: top; }
 img { border: 1px solid #bbbbbb; }
 .nobr { white-space: nowrap; }
 .editor-tools { text-align: right; margin-top: 4px; }
+.editor-tools .ui-button { vertical-align: top; }
 </style>
 
 <link type="text/css" href="css/cupertino/jquery-ui-1.8.18.custom.css" rel="stylesheet" />	
