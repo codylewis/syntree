@@ -44,14 +44,16 @@
 			<div id="panels">
 				<div id="editor" class="card">
 					<div class="card-body">
-						<textarea
-							id="i"
-							class="form-control"
-							data-bs-theme="light"
-							rows="8"
-							spellcheck="false"
-							aria-label="Labelled bracket notation"
-						>
+						<div id="i-wrap" class="highlighting">
+							<div id="i-highlight" data-bs-theme="light" aria-hidden="true"></div>
+							<textarea
+								id="i"
+								class="form-control"
+								data-bs-theme="light"
+								rows="8"
+								spellcheck="false"
+								aria-label="Labelled bracket notation"
+							>
 [S
   [NP This]
   [VP
@@ -59,7 +61,8 @@
     [^NP a wug]
   ]
 ]</textarea
-						>
+							>
+						</div>
 						<div class="editor-tools">
 							<button
 								type="button"
@@ -269,6 +272,28 @@
 											for="auto-close"
 											>Auto-close [ ]</label
 										>
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="match-brackets"
+											autocomplete="off"
+											checked
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="match-brackets"
+											>Match brackets</label
+										>
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="indent-guides"
+											autocomplete="off"
+											checked
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="indent-guides"
+											>Indent guides</label
+										>
 									</div>
 								</div>
 							</div>
@@ -391,6 +416,7 @@
 		<script type="text/javascript" src="js/syntree.js"></script>
 		<script type="text/javascript">
 			function handler() {
+				highlight_brackets();
 				try {
 					// Initialize the various options.
 					var term_font = "";
@@ -613,6 +639,85 @@
 				}
 			}
 
+			function escape_html(str) {
+				return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			}
+
+			// While either editor highlight is on, the textarea's text is transparent and this
+			// layer behind it shows the same text with the bracket next to the cursor boxed
+			// along with its partner, and indent guides.
+			function highlight_brackets() {
+				var ta = document.getElementById("i");
+				var hl = document.getElementById("i-highlight");
+				var match = document.getElementById("match-brackets").checked;
+				var guides = document.getElementById("indent-guides").checked;
+				var on = match || guides;
+				document.getElementById("i-wrap").classList.toggle("highlighting", on);
+				if (!on) return;
+
+				var str = ta.value;
+				var matched = {};
+				if (match && document.activeElement == ta && ta.selectionStart == ta.selectionEnd) {
+					var partner = {};
+					var stack = [];
+					for (var i = 0; i < str.length; i++) {
+						if (str[i] == "[") {
+							stack.push(i);
+						} else if (str[i] == "]" && stack.length > 0) {
+							var open = stack.pop();
+							partner[i] = open;
+							partner[open] = i;
+						}
+					}
+					var pos = ta.selectionStart;
+					var at = pos - 1 in partner ? pos - 1 : pos in partner ? pos : -1;
+					if (at >= 0) {
+						matched[at] = true;
+						matched[partner[at]] = true;
+					}
+				}
+
+				var indent = /(?:\t| {2})+/y;
+				var html = "";
+				var i = 0;
+				while (i < str.length) {
+					if (guides && (i == 0 || str[i - 1] == "\n")) {
+						indent.lastIndex = i;
+						var m = indent.exec(str);
+						if (m) {
+							m[0].match(/\t| {2}/g).forEach(function (unit) {
+								html += '<span class="indent-guide">' + unit + "</span>";
+							});
+							i += m[0].length;
+							continue;
+						}
+					}
+					if (matched[i]) {
+						html += '<span class="bracket-match">' + str[i] + "</span>";
+					} else {
+						html += escape_html(str[i]);
+					}
+					i++;
+				}
+				// The trailing space keeps a final empty line from collapsing.
+				hl.innerHTML = html + " ";
+				sync_highlight();
+			}
+
+			function sync_highlight() {
+				var ta = document.getElementById("i");
+				var hl = document.getElementById("i-highlight");
+				var cs = getComputedStyle(ta);
+				// Match the textarea's content box, which shrinks when a scrollbar appears.
+				hl.style.top = ta.clientTop + "px";
+				hl.style.left = ta.clientLeft + "px";
+				hl.style.width = ta.clientWidth + "px";
+				hl.style.height = ta.clientHeight + "px";
+				hl.style.padding = cs.padding;
+				hl.scrollTop = ta.scrollTop;
+				hl.scrollLeft = ta.scrollLeft;
+			}
+
 			function auto_close_keypress(e) {
 				if (!document.getElementById("auto-close").checked) return true;
 				if (e.ctrlKey || e.metaKey || e.altKey) return true;
@@ -684,6 +789,13 @@
 					handler();
 					return true;
 				});
+				$("#i").scroll(sync_highlight);
+				$("#match-brackets, #indent-guides").change(highlight_brackets);
+				$(document).bind("selectionchange", highlight_brackets);
+				$("#i").bind("focus blur", highlight_brackets);
+				if (window.ResizeObserver) {
+					new ResizeObserver(sync_highlight).observe(document.getElementById("i"));
+				}
 				$(".redraw").change(function () {
 					return handler();
 				});

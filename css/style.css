@@ -97,6 +97,45 @@ body {
 	line-height: 1.5;
 	color-scheme: light;
 }
+#i-wrap {
+	position: relative;
+	background-color: #fff;
+	border-radius: var(--bs-border-radius);
+}
+#i-highlight {
+	display: none;
+	position: absolute;
+	box-sizing: border-box;
+	overflow: hidden;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	font-family: var(--bs-font-monospace);
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--bs-body-color);
+	pointer-events: none;
+}
+#i-wrap.highlighting #i-highlight {
+	display: block;
+}
+#i-wrap.highlighting #i {
+	position: relative;
+	background-color: transparent;
+	color: transparent;
+	caret-color: var(--bs-body-color);
+}
+#i-wrap.highlighting #i::selection {
+	background-color: rgba(13, 110, 253, 0.25);
+}
+.bracket-match {
+	border-radius: 2px;
+	box-shadow: inset 0 0 0 1px #6e7781;
+	background-color: rgba(110, 119, 129, 0.15);
+}
+/* A shadow rather than a border, so the guide doesn't take up width and shift the text. */
+.indent-guide {
+	box-shadow: inset 1px 0 0 #d0d7de;
+}
 .editor-tools {
 	display: flex;
 	justify-content: flex-end;
