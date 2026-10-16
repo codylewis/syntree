@@ -147,7 +147,7 @@ a.example {
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	padding: 24px 24px 56px;
+	padding: 12px 24px 56px;
 	overflow: auto;
 	background: #fff radial-gradient(#dfe2e7 1px, transparent 1px) 0 0 / 16px 16px;
 	border: 1px solid var(--bs-border-color);
