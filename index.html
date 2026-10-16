@@ -1,347 +1,625 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="description" content="An app for producing linguistics syntax trees from labelled bracket notation." />
-	<link rel="canonical" href="https://codylewis.github.io/syntree/" />
-	<title>Syntax Tree Generator</title>
-	<link rel="icon" href="data:," />
-	<link rel="stylesheet" href="css/bootstrap.min.css" />
-	<link rel="stylesheet" href="css/style.css" />
-</head>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta
+			name="description"
+			content="An app for producing linguistics syntax trees from labelled bracket notation."
+		/>
+		<link rel="canonical" href="https://codylewis.github.io/syntree/" />
+		<title>Syntax Tree Generator</title>
+		<link rel="icon" href="data:," />
+		<link rel="stylesheet" href="css/bootstrap.min.css" />
+		<link rel="stylesheet" href="css/style.css" />
+	</head>
 
-<body>
-	<header id="title">
-		<h1>Syntax Tree Generator</h1>
-		<a href="https://github.com/codylewis/syntree" class="link-secondary">GitHub</a>
-	</header>
+	<body>
+		<header id="title">
+			<h1>Syntax Tree Generator</h1>
+			<a href="https://github.com/codylewis/syntree" class="link-secondary">GitHub</a>
+		</header>
 
-	<div id="layout">
-	<div id="panels">
-	<div id="editor" class="card">
-		<div class="card-body">
-			<textarea id="i" class="form-control" rows="8" spellcheck="false" aria-label="Labelled bracket notation">[S
+		<div id="layout">
+			<div id="panels">
+				<div id="editor" class="card">
+					<div class="card-body">
+						<textarea
+							id="i"
+							class="form-control"
+							rows="8"
+							spellcheck="false"
+							aria-label="Labelled bracket notation"
+						>
+[S
   [NP This]
   [VP
     [V is]
     [^NP a wug]
   ]
-]</textarea>
-			<div class="editor-tools">
-				<button type="button" id="format" class="btn btn-sm btn-outline-secondary">Format</button>
-			</div>
-		</div>
-	</div>
+]</textarea
+						>
+						<div class="editor-tools">
+							<button
+								type="button"
+								id="format"
+								class="btn btn-sm btn-outline-secondary"
+							>
+								Format
+							</button>
+						</div>
+					</div>
+				</div>
 
-	<div id="accordion" class="accordion">
-		<div class="accordion-item">
-			<h2 class="accordion-header">
-				<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#options" aria-expanded="false" aria-controls="options">Options</button>
-			</h2>
-			<div id="options" class="accordion-collapse collapse" data-bs-parent="#accordion">
-				<div class="accordion-body">
-					<div class="option-row">
-						<span class="option-label">Font</span>
-						<div class="btn-group btn-group-sm" role="group" aria-label="Font">
-							<input type="radio" class="btn-check redraw" name="font-style" id="serif" value="serif" autocomplete="off" /><label class="btn btn-outline-primary" for="serif">Serif</label>
-							<input type="radio" class="btn-check redraw" name="font-style" id="sans-serif" value="sans-serif" autocomplete="off" checked /><label class="btn btn-outline-primary" for="sans-serif">Sans-Serif</label>
-							<input type="radio" class="btn-check redraw" name="font-style" id="monospace" value="monospace" autocomplete="off" /><label class="btn btn-outline-primary" for="monospace">Monospace</label>
+				<div id="accordion" class="accordion">
+					<div class="accordion-item">
+						<h2 class="accordion-header">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#options"
+								aria-expanded="false"
+								aria-controls="options"
+							>
+								Options
+							</button>
+						</h2>
+						<div
+							id="options"
+							class="accordion-collapse collapse"
+							data-bs-parent="#accordion"
+						>
+							<div class="accordion-body">
+								<div class="option-row">
+									<span class="option-label">Font</span>
+									<div
+										class="btn-group btn-group-sm"
+										role="group"
+										aria-label="Font"
+									>
+										<input
+											type="radio"
+											class="btn-check redraw"
+											name="font-style"
+											id="serif"
+											value="serif"
+											autocomplete="off"
+										/><label class="btn btn-outline-primary" for="serif"
+											>Serif</label
+										>
+										<input
+											type="radio"
+											class="btn-check redraw"
+											name="font-style"
+											id="sans-serif"
+											value="sans-serif"
+											autocomplete="off"
+											checked
+										/><label class="btn btn-outline-primary" for="sans-serif"
+											>Sans-Serif</label
+										>
+										<input
+											type="radio"
+											class="btn-check redraw"
+											name="font-style"
+											id="monospace"
+											value="monospace"
+											autocomplete="off"
+										/><label class="btn btn-outline-primary" for="monospace"
+											>Monospace</label
+										>
+									</div>
+								</div>
+								<div class="option-row">
+									<span class="option-label">Terminals</span>
+									<div
+										class="btn-group btn-group-sm"
+										role="group"
+										aria-label="Terminals"
+									>
+										<input
+											type="checkbox"
+											class="btn-check redraw"
+											id="term-bold"
+											autocomplete="off"
+										/><label class="btn btn-outline-primary" for="term-bold"
+											>Bold</label
+										>
+										<input
+											type="checkbox"
+											class="btn-check redraw"
+											id="term-ital"
+											autocomplete="off"
+										/><label class="btn btn-outline-primary" for="term-ital"
+											>Italic</label
+										>
+									</div>
+								</div>
+								<div class="option-row">
+									<span class="option-label">Non-terminals</span>
+									<div
+										class="btn-group btn-group-sm"
+										role="group"
+										aria-label="Non-terminals"
+									>
+										<input
+											type="checkbox"
+											class="btn-check redraw"
+											id="nonterm-bold"
+											autocomplete="off"
+										/><label class="btn btn-outline-primary" for="nonterm-bold"
+											>Bold</label
+										>
+										<input
+											type="checkbox"
+											class="btn-check redraw"
+											id="nonterm-ital"
+											autocomplete="off"
+										/><label class="btn btn-outline-primary" for="nonterm-ital"
+											>Italic</label
+										>
+									</div>
+								</div>
+								<div class="option-row">
+									<label class="option-label" for="font-size-slider"
+										>Font size</label
+									>
+									<input
+										type="range"
+										class="form-range redraw"
+										id="font-size-slider"
+										min="8"
+										max="16"
+										step="1"
+										value="12"
+										data-unit="pt"
+									/>
+									<output class="option-value" for="font-size-slider"></output>
+								</div>
+								<div class="option-row">
+									<label class="option-label" for="vert-space-slider"
+										>Vertical spacing</label
+									>
+									<input
+										type="range"
+										class="form-range redraw"
+										id="vert-space-slider"
+										min="35"
+										max="70"
+										step="5"
+										value="35"
+										data-unit="px"
+									/>
+									<output class="option-value" for="vert-space-slider"></output>
+								</div>
+								<div class="option-row">
+									<label class="option-label" for="hor-space-slider"
+										>Horizontal spacing</label
+									>
+									<input
+										type="range"
+										class="form-range redraw"
+										id="hor-space-slider"
+										min="10"
+										max="50"
+										step="5"
+										value="10"
+										data-unit="px"
+									/>
+									<output class="option-value" for="hor-space-slider"></output>
+								</div>
+								<div class="option-row">
+									<span class="option-label">Display</span>
+									<div class="option-buttons">
+										<input
+											type="checkbox"
+											class="btn-check redraw"
+											id="color-check"
+											autocomplete="off"
+											checked
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="color-check"
+											>Color</label
+										>
+										<input
+											type="checkbox"
+											class="btn-check redraw"
+											id="term-lines"
+											autocomplete="off"
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="term-lines"
+											>Terminal lines</label
+										>
+									</div>
+								</div>
+								<div class="option-row">
+									<span class="option-label">Editor</span>
+									<div class="option-buttons">
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="auto-close"
+											autocomplete="off"
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="auto-close"
+											>Auto-close [ ]</label
+										>
+										<button
+											type="button"
+											id="make-link"
+											class="btn btn-sm btn-outline-secondary"
+										>
+											Link
+										</button>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
-					<div class="option-row">
-						<span class="option-label">Terminals</span>
-						<div class="btn-group btn-group-sm" role="group" aria-label="Terminals">
-							<input type="checkbox" class="btn-check redraw" id="term-bold" autocomplete="off" /><label class="btn btn-outline-primary" for="term-bold">Bold</label>
-							<input type="checkbox" class="btn-check redraw" id="term-ital" autocomplete="off" /><label class="btn btn-outline-primary" for="term-ital">Italic</label>
-						</div>
-					</div>
-					<div class="option-row">
-						<span class="option-label">Non-terminals</span>
-						<div class="btn-group btn-group-sm" role="group" aria-label="Non-terminals">
-							<input type="checkbox" class="btn-check redraw" id="nonterm-bold" autocomplete="off" /><label class="btn btn-outline-primary" for="nonterm-bold">Bold</label>
-							<input type="checkbox" class="btn-check redraw" id="nonterm-ital" autocomplete="off" /><label class="btn btn-outline-primary" for="nonterm-ital">Italic</label>
-						</div>
-					</div>
-					<div class="option-row">
-						<label class="option-label" for="font-size-slider">Font size</label>
-						<input type="range" class="form-range redraw" id="font-size-slider" min="8" max="16" step="1" value="12" data-unit="pt" />
-						<output class="option-value" for="font-size-slider"></output>
-					</div>
-					<div class="option-row">
-						<label class="option-label" for="vert-space-slider">Vertical spacing</label>
-						<input type="range" class="form-range redraw" id="vert-space-slider" min="35" max="70" step="5" value="35" data-unit="px" />
-						<output class="option-value" for="vert-space-slider"></output>
-					</div>
-					<div class="option-row">
-						<label class="option-label" for="hor-space-slider">Horizontal spacing</label>
-						<input type="range" class="form-range redraw" id="hor-space-slider" min="10" max="50" step="5" value="10" data-unit="px" />
-						<output class="option-value" for="hor-space-slider"></output>
-					</div>
-					<div class="option-row">
-						<span class="option-label">Display</span>
-						<div class="option-buttons">
-							<input type="checkbox" class="btn-check redraw" id="color-check" autocomplete="off" checked /><label class="btn btn-sm btn-outline-primary" for="color-check">Color</label>
-							<input type="checkbox" class="btn-check redraw" id="term-lines" autocomplete="off" /><label class="btn btn-sm btn-outline-primary" for="term-lines">Terminal lines</label>
-						</div>
-					</div>
-					<div class="option-row">
-						<span class="option-label">Editor</span>
-						<div class="option-buttons">
-							<input type="checkbox" class="btn-check" id="auto-close" autocomplete="off" /><label class="btn btn-sm btn-outline-primary" for="auto-close">Auto-close [ ]</label>
-							<button type="button" id="make-link" class="btn btn-sm btn-outline-secondary">Link</button>
+
+					<div class="accordion-item">
+						<h2 class="accordion-header">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#help"
+								aria-expanded="false"
+								aria-controls="help"
+							>
+								Help
+							</button>
+						</h2>
+						<div
+							id="help"
+							class="accordion-collapse collapse"
+							data-bs-parent="#accordion"
+						>
+							<div class="accordion-body help">
+								<p>
+									Use labelled bracket notation. This app will build the tree as
+									you type and will attempt to close any brackets that you may be
+									missing. Save the image to your computer by right-clicking on it
+									and selecting "Save image as". For more information, including
+									on how to draw movement lines, visit the
+									<a href="https://github.com/mshang/syntree/wiki">wiki</a>.
+								</p>
+								<p>
+									This is a fork of
+									<a href="https://github.com/mshang/syntree"
+										>mshang's Syntax Tree Generator</a
+									>. The forked code can be found at
+									<a href="https://github.com/codylewis/syntree"
+										>github.com/codylewis/syntree</a
+									>.
+								</p>
+								<h3>Examples</h3>
+								<ul class="examples">
+									<li>
+										<a class="example" href="?i=[NP^ Alice]">[NP^ Alice]</a>
+									</li>
+									<li>
+										<a class="example" href="?i=[NP [N Alice] and [N Bob]]"
+											>[NP [N Alice] and [N Bob]]</a
+										>
+									</li>
+									<li>
+										<a
+											class="example"
+											href="?i=[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of physics"
+											>[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of
+											physics</a
+										>
+									</li>
+									<li>
+										<a
+											class="example"
+											href="?i=[S [X_a Movement] [Y example &lt;a&gt;]]"
+											>[S [X_a Movement] [Y example &lt;a&gt;]]</a
+										>
+									</li>
+								</ul>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
 
-		<div class="accordion-item">
-			<h2 class="accordion-header">
-				<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help" aria-expanded="false" aria-controls="help">Help</button>
-			</h2>
-			<div id="help" class="accordion-collapse collapse" data-bs-parent="#accordion">
-				<div class="accordion-body help">
-					<p>Use labelled bracket notation. This app will build the tree as you type and will attempt to close any brackets that you may be missing. Save the image to your computer by right-clicking on it and selecting "Save image as". For more information, including on how to draw movement lines, visit the <a href="https://github.com/mshang/syntree/wiki">wiki</a>.</p>
-					<p>This is a fork of <a href="https://github.com/mshang/syntree">mshang's Syntax Tree Generator</a>. The forked code can be found at <a href="https://github.com/codylewis/syntree">github.com/codylewis/syntree</a>.</p>
-					<h3>Examples</h3>
-					<ul class="examples">
-						<li><a class="example" href="?i=[NP^ Alice]">[NP^ Alice]</a></li>
-						<li><a class="example" href="?i=[NP [N Alice] and [N Bob]]">[NP [N Alice] and [N Bob]]</a></li>
-						<li><a class="example" href="?i=[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of physics">[S[NP[N Alice]][VP[V is][NP[N'[N a student][PP^ of physics</a></li>
-						<li><a class="example" href="?i=[S [X_a Movement] [Y example &lt;a&gt;]]">[S [X_a Movement] [Y example &lt;a&gt;]]</a></li>
-					</ul>
-				</div>
+			<div id="tree-panel">
+				<div id="image-goes-here"></div>
+				<div id="tree-status" role="status" aria-live="polite"></div>
+				<button type="button" id="copy-tree" class="btn btn-sm btn-light">Copy tree</button>
 			</div>
 		</div>
-	</div>
-	</div>
 
-	<div id="tree-panel">
-		<div id="image-goes-here"></div>
-		<div id="tree-status" role="status" aria-live="polite"></div>
-		<button type="button" id="copy-tree" class="btn btn-sm btn-light">Copy tree</button>
-	</div>
-	</div>
+		<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+		<script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
+		<script type="text/javascript" src="js/base64.js"></script>
+		<script type="text/javascript" src="js/canvas2image.js"></script>
+		<script type="text/javascript" src="js/syntree.js"></script>
+		<script type="text/javascript">
+			function handler() {
+				try {
+					// Initialize the various options.
+					var term_font = "";
+					var nonterm_font = "";
+					var color = false;
+					var term_lines = false;
+					if (document.getElementById("term-ital").checked)
+						term_font = term_font + "italic ";
+					if (document.getElementById("term-bold").checked)
+						term_font = term_font + "bold ";
+					if (document.getElementById("nonterm-ital").checked)
+						nonterm_font = nonterm_font + "italic ";
+					if (document.getElementById("nonterm-bold").checked)
+						nonterm_font = nonterm_font + "bold ";
+					if (document.getElementById("color-check").checked) color = true;
+					if (document.getElementById("term-lines").checked) term_lines = true;
+					font_size = parseInt(document.getElementById("font-size-slider").value, 10);
+					vert_space = parseInt(document.getElementById("vert-space-slider").value, 10);
+					hor_space = parseInt(document.getElementById("hor-space-slider").value, 10);
+					term_font = term_font + font_size + "pt ";
+					nonterm_font = nonterm_font + font_size + "pt ";
+					term_font = term_font + $("input:radio[name=font-style]:checked").val();
+					nonterm_font = nonterm_font + $("input:radio[name=font-style]:checked").val();
 
-<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
-<script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
-<script type="text/javascript" src="js/base64.js"></script>
-<script type="text/javascript" src="js/canvas2image.js"></script>
-<script type="text/javascript" src="js/syntree.js"></script>
-<script type="text/javascript">
+					// Get the string.
+					var str = document.getElementById("i").value;
+					var problem = check_input(str);
+					show_status(problem);
+					if (problem && problem.level == "empty") {
+						$("#image-goes-here").empty();
+						$("#copy-tree").prop("disabled", true);
+						return false;
+					}
+					if (problem && problem.level == "error") return false;
 
-function handler() {
-try {
-	// Initialize the various options.
-	var term_font = "";
-	var nonterm_font = "";
-	var color = false;
-	var term_lines = false;
-	if (document.getElementById("term-ital").checked)
-		term_font = term_font + "italic ";
-	if (document.getElementById("term-bold").checked)
-		term_font = term_font + "bold ";
-	if (document.getElementById("nonterm-ital").checked)
-		nonterm_font = nonterm_font + "italic ";
-	if (document.getElementById("nonterm-bold").checked)
-		nonterm_font = nonterm_font + "bold ";
-	if (document.getElementById("color-check").checked)
-		color = true;
-	if (document.getElementById("term-lines").checked)
-		term_lines = true;
-	font_size = parseInt(document.getElementById("font-size-slider").value, 10);
-	vert_space = parseInt(document.getElementById("vert-space-slider").value, 10);
-	hor_space = parseInt(document.getElementById("hor-space-slider").value, 10);
-	term_font = term_font + font_size + "pt ";
-	nonterm_font = nonterm_font + font_size + "pt ";
-	term_font = term_font + $('input:radio[name=font-style]:checked').val();
-	nonterm_font = nonterm_font + $('input:radio[name=font-style]:checked').val();
-	
-	// Get the string.
-	var str = document.getElementById("i").value;
-	var problem = check_input(str);
-	show_status(problem);
-	if (problem && problem.level == "empty") {
-		$("#image-goes-here").empty();
-		$("#copy-tree").prop("disabled", true);
-		return false;
-	}
-	if (problem && problem.level == "error") return false;
-	
-	var img = go(str, font_size, term_font, nonterm_font, vert_space, hor_space, color, term_lines);
-	$("#image-goes-here").empty();
-	$("#image-goes-here").append(img);
-	$("#copy-tree").prop("disabled", false);
-	
-} catch (err) {
-	if (debug) console.error(err);
-	if (err == "canvas")
-		show_status({level: "error", text: "This browser can't draw trees."});
-	else
-		show_status({level: "error", text: "Couldn't draw this tree. Check the brackets near your last edit."});
-} // try-catch
-return false;
-} // handler()
+					var img = go(
+						str,
+						font_size,
+						term_font,
+						nonterm_font,
+						vert_space,
+						hor_space,
+						color,
+						term_lines
+					);
+					$("#image-goes-here").empty();
+					$("#image-goes-here").append(img);
+					$("#copy-tree").prop("disabled", false);
+				} catch (err) {
+					if (debug) console.error(err);
+					if (err == "canvas")
+						show_status({ level: "error", text: "This browser can't draw trees." });
+					else
+						show_status({
+							level: "error",
+							text: "Couldn't draw this tree. Check the brackets near your last edit.",
+						});
+				} // try-catch
+				return false;
+			} // handler()
 
-// Returns the most important problem with the input, or null if there is none.
-function check_input(str) {
-	if (/^\s*$/.test(str))
-		return {level: "empty", text: "Type a tree in labelled bracket notation, e.g. [S [NP Alice] [VP sleeps]]"};
-	if (!/^\s*\[/.test(str))
-		return {level: "error", text: "Start the tree with [ and a label, e.g. [S"};
-	
-	var open = 0;
-	var line = 1;
-	for (var i = 0; i < str.length; i++) {
-		if (str[i] == "\n") line++;
-		if (str[i] == "[") open++;
-		if (str[i] == "]") open--;
-		if (open < 0)
-			return {level: "warning", text: "Extra ] on line " + line + "."};
-		if (open == 0 && i < str.length - 1 && /\S/.test(str.substring(i + 1)))
-			return {level: "warning", text: "Text after the closing ] on line " + line + " is outside the tree."};
-	}
-	
-	var labels = {};
-	str.replace(/\[[^\s\[\]]*?_(\w+)(?=[\s\[\]])/g, function(match, label) {labels[label] = true;});
-	var tails = str.match(/<\w+>/g) || [];
-	for (var i = 0; i < tails.length; i++) {
-		var name = tails[i].slice(1, -1);
-		if (!labels[name])
-			return {level: "warning", text: "No node is labelled _" + name + " for " + tails[i] + ", so its movement line isn't drawn."};
-	}
-	
-	if (open > 0)
-		return {level: "info", text: open + (open == 1 ? " bracket is" : " brackets are") + " unclosed and will be closed automatically."};
-	return null;
-}
+			// Returns the most important problem with the input, or null if there is none.
+			function check_input(str) {
+				if (/^\s*$/.test(str))
+					return {
+						level: "empty",
+						text: "Type a tree in labelled bracket notation, e.g. [S [NP Alice] [VP sleeps]]",
+					};
+				if (!/^\s*\[/.test(str))
+					return { level: "error", text: "Start the tree with [ and a label, e.g. [S" };
 
-function show_status(problem) {
-	var el = $("#tree-status");
-	el.removeClass("status-info status-warning status-error status-empty");
-	if (!problem) {
-		el.text("");
-		return;
-	}
-	el.addClass("status-" + problem.level).text(problem.text);
-}
+				var open = 0;
+				var line = 1;
+				for (var i = 0; i < str.length; i++) {
+					if (str[i] == "\n") line++;
+					if (str[i] == "[") open++;
+					if (str[i] == "]") open--;
+					if (open < 0)
+						return { level: "warning", text: "Extra ] on line " + line + "." };
+					if (open == 0 && i < str.length - 1 && /\S/.test(str.substring(i + 1)))
+						return {
+							level: "warning",
+							text:
+								"Text after the closing ] on line " +
+								line +
+								" is outside the tree.",
+						};
+				}
 
-function show_slider_values() {
-	$("output.option-value").each(function() {
-		var slider = document.getElementById($(this).attr("for"));
-		$(this).text(slider.value + " " + $(slider).attr("data-unit"));
-	});
-}
+				var labels = {};
+				str.replace(/\[[^\s\[\]]*?_(\w+)(?=[\s\[\]])/g, function (match, label) {
+					labels[label] = true;
+				});
+				var tails = str.match(/<\w+>/g) || [];
+				for (var i = 0; i < tails.length; i++) {
+					var name = tails[i].slice(1, -1);
+					if (!labels[name])
+						return {
+							level: "warning",
+							text:
+								"No node is labelled _" +
+								name +
+								" for " +
+								tails[i] +
+								", so its movement line isn't drawn.",
+						};
+				}
 
-function copy_tree() {
-	var btn = this;
-	var img = $("#image-goes-here img")[0];
-	if (!img) return false;
-	var done = function(text) {
-		$(btn).text(text);
-		clearTimeout(btn.reset);
-		btn.reset = setTimeout(function() {$(btn).text("Copy tree");}, 1500);
-	};
-	try {
-		var blob = fetch(img.src).then(function(r) {return r.blob();});
-		navigator.clipboard.write([new ClipboardItem({"image/png": blob})])
-			.then(function() {done("Copied");}, function() {done("Copy failed");});
-	} catch (err) {
-		done("Copy failed");
-	}
-	return false;
-}
+				if (open > 0)
+					return {
+						level: "info",
+						text:
+							open +
+							(open == 1 ? " bracket is" : " brackets are") +
+							" unclosed and will be closed automatically.",
+					};
+				return null;
+			}
 
-function insert_text(ta, text) {
-	ta.focus();
-	var ok = false;
-	try {
-		ok = document.execCommand(text == "" ? "delete" : "insertText", false, text);
-	} catch (err) {}
-	if (!ok) {
-		var start = ta.selectionStart;
-		ta.value = ta.value.substring(0, start) + text + ta.value.substring(ta.selectionEnd);
-		ta.selectionStart = ta.selectionEnd = start + text.length;
-	}
-}
+			function show_status(problem) {
+				var el = $("#tree-status");
+				el.removeClass("status-info status-warning status-error status-empty");
+				if (!problem) {
+					el.text("");
+					return;
+				}
+				el.addClass("status-" + problem.level).text(problem.text);
+			}
 
-function auto_close_keypress(e) {
-	if (!document.getElementById("auto-close").checked) return true;
-	if (e.ctrlKey || e.metaKey || e.altKey) return true;
-	var ta = this;
-	var start = ta.selectionStart;
-	var end = ta.selectionEnd;
-	var ch = String.fromCharCode(e.which);
-	
-	if (ch == "[") {
-		e.preventDefault();
-		var selected = ta.value.substring(start, end);
-		insert_text(ta, "[" + selected + "]");
-		ta.selectionStart = start + 1;
-		ta.selectionEnd = start + 1 + selected.length;
-	} else if (ch == "]" && start == end && ta.value[start] == "]") {
-		e.preventDefault();
-		ta.selectionStart = ta.selectionEnd = start + 1;
-	}
-	return true;
-}
+			function show_slider_values() {
+				$("output.option-value").each(function () {
+					var slider = document.getElementById($(this).attr("for"));
+					$(this).text(slider.value + " " + $(slider).attr("data-unit"));
+				});
+			}
 
-function auto_close_keydown(e) {
-	if (!document.getElementById("auto-close").checked) return true;
-	if (e.which != 8) return true;
-	var ta = this;
-	var start = ta.selectionStart;
-	if (start != ta.selectionEnd || start == 0) return true;
-	if (ta.value[start - 1] != "[" || ta.value[start] != "]") return true;
-	e.preventDefault();
-	ta.selectionStart = start - 1;
-	ta.selectionEnd = start + 1;
-	insert_text(ta, "");
-	return true;
-}
+			function copy_tree() {
+				var btn = this;
+				var img = $("#image-goes-here img")[0];
+				if (!img) return false;
+				var done = function (text) {
+					$(btn).text(text);
+					clearTimeout(btn.reset);
+					btn.reset = setTimeout(function () {
+						$(btn).text("Copy tree");
+					}, 1500);
+				};
+				try {
+					var blob = fetch(img.src).then(function (r) {
+						return r.blob();
+					});
+					navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(
+						function () {
+							done("Copied");
+						},
+						function () {
+							done("Copy failed");
+						}
+					);
+				} catch (err) {
+					done("Copy failed");
+				}
+				return false;
+			}
 
-$(function() {
-	try {
-		var qs = decodeURIComponent(window.location.search.slice(1));
-		qs = qs.replace(/^i=/,"");
-		qs = qs.replace(/\+/g," ");
-		if (qs == "") throw "";
-		document.getElementById("i").value = qs;
-	} catch (err) {}
-	
-	show_slider_values();
-	handler();
-	
-	// Events
-	$("#i").keypress(auto_close_keypress);
-	$("#i").keydown(auto_close_keydown);
-	$("#i").keypress(function() {handler(); return true;});
-	$("#i").keyup(function() {handler(); return true;});
-	$("#i").keydown(function() {handler(); return true;});
-	$("#i").change(function() {handler(); return true;});
-	$("#i").bind("input", function() {handler(); return true;});
-	$(".redraw").change(function() {return handler()});
-	$("#format").click(function() {
-		var ta = document.getElementById("i");
-		ta.select();
-		insert_text(ta, format_brackets(ta.value));
-		ta.rows = Math.min(Math.max(ta.value.split("\n").length, 8), 25);
-		handler();
-		return false;
-	});
-	$("#copy-tree").click(copy_tree);
-	$("#make-link").click(function() {
-		var loc = window.location.href;
-		loc = loc.replace(window.location.search, "");
-		
-		window.prompt ("Link for this tree:", loc + "?i=" +
-			encodeURIComponent(document.getElementById("i").value));
-		return false;
-	});
-	$("input[type=range]").bind("input", function() {show_slider_values(); handler(); return true;});
-});
-</script>
+			function insert_text(ta, text) {
+				ta.focus();
+				var ok = false;
+				try {
+					ok = document.execCommand(text == "" ? "delete" : "insertText", false, text);
+				} catch (err) {}
+				if (!ok) {
+					var start = ta.selectionStart;
+					ta.value =
+						ta.value.substring(0, start) + text + ta.value.substring(ta.selectionEnd);
+					ta.selectionStart = ta.selectionEnd = start + text.length;
+				}
+			}
 
-</body>
+			function auto_close_keypress(e) {
+				if (!document.getElementById("auto-close").checked) return true;
+				if (e.ctrlKey || e.metaKey || e.altKey) return true;
+				var ta = this;
+				var start = ta.selectionStart;
+				var end = ta.selectionEnd;
+				var ch = String.fromCharCode(e.which);
+
+				if (ch == "[") {
+					e.preventDefault();
+					var selected = ta.value.substring(start, end);
+					insert_text(ta, "[" + selected + "]");
+					ta.selectionStart = start + 1;
+					ta.selectionEnd = start + 1 + selected.length;
+				} else if (ch == "]" && start == end && ta.value[start] == "]") {
+					e.preventDefault();
+					ta.selectionStart = ta.selectionEnd = start + 1;
+				}
+				return true;
+			}
+
+			function auto_close_keydown(e) {
+				if (!document.getElementById("auto-close").checked) return true;
+				if (e.which != 8) return true;
+				var ta = this;
+				var start = ta.selectionStart;
+				if (start != ta.selectionEnd || start == 0) return true;
+				if (ta.value[start - 1] != "[" || ta.value[start] != "]") return true;
+				e.preventDefault();
+				ta.selectionStart = start - 1;
+				ta.selectionEnd = start + 1;
+				insert_text(ta, "");
+				return true;
+			}
+
+			$(function () {
+				try {
+					var qs = decodeURIComponent(window.location.search.slice(1));
+					qs = qs.replace(/^i=/, "");
+					qs = qs.replace(/\+/g, " ");
+					if (qs == "") throw "";
+					document.getElementById("i").value = qs;
+				} catch (err) {}
+
+				show_slider_values();
+				handler();
+
+				// Events
+				$("#i").keypress(auto_close_keypress);
+				$("#i").keydown(auto_close_keydown);
+				$("#i").keypress(function () {
+					handler();
+					return true;
+				});
+				$("#i").keyup(function () {
+					handler();
+					return true;
+				});
+				$("#i").keydown(function () {
+					handler();
+					return true;
+				});
+				$("#i").change(function () {
+					handler();
+					return true;
+				});
+				$("#i").bind("input", function () {
+					handler();
+					return true;
+				});
+				$(".redraw").change(function () {
+					return handler();
+				});
+				$("#format").click(function () {
+					var ta = document.getElementById("i");
+					ta.select();
+					insert_text(ta, format_brackets(ta.value));
+					ta.rows = Math.min(Math.max(ta.value.split("\n").length, 8), 25);
+					handler();
+					return false;
+				});
+				$("#copy-tree").click(copy_tree);
+				$("#make-link").click(function () {
+					var loc = window.location.href;
+					loc = loc.replace(window.location.search, "");
+
+					window.prompt(
+						"Link for this tree:",
+						loc + "?i=" + encodeURIComponent(document.getElementById("i").value)
+					);
+					return false;
+				});
+				$("input[type=range]").bind("input", function () {
+					show_slider_values();
+					handler();
+					return true;
+				});
+			});
+		</script>
+	</body>
 </html>
