@@ -19,8 +19,13 @@
 
 
 <body>
-	<div id="editor" class="ui-accordion ui-widget ui-helper-reset">
-		<h3 class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top"><a>Syntax Tree Generator</a></h3><div class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active" style="text-align:left">
+	<div id="title" class="ui-accordion ui-widget ui-helper-reset">
+		<h3 class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-all"><a>Syntax Tree Generator</a></h3>
+	</div>
+	<div id="layout">
+	<div id="panels">
+	<div id="editor" class="ui-widget">
+		<div class="ui-helper-reset ui-widget-content ui-corner-all">
 			<textarea id="i" rows="8">[S
   [NP This]
   [VP
@@ -97,21 +102,34 @@
 			<a class="example" href="?i=[S [X_a Movement] [Y example &lt;a&gt;]]">[S [X_a Movement] [Y example &lt;a&gt;]]</a>
 		</div>
 	</div>
-	<br />
+	</div>
 
 	<div id="image-goes-here"></div>
+	</div>
 
 
 <style type="text/css">
 body { font-size: small !important; font-family: sans-serif; margin: 20px; background-color: #ffffff}
-#editor, #accordion { margin: 0px auto; width: 500px; text-align: center; }
+#layout { display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 20px; }
+#panels, #image-goes-here { flex: 1 1 0; min-width: 0; }
+#title { margin: 0px auto 10px; width: 1020px; text-align: center; }
+#editor, #accordion { margin: 0px auto 0px 0px; width: 500px; text-align: center; }
+#editor { margin-bottom: 2px; }
+#editor .ui-widget-content { padding: .5em; text-align: left; }
+#image-goes-here { text-align: right; }
+@media (max-width: 1060px) {
+	#layout { flex-direction: column; align-items: stretch; }
+	#title { width: 500px; }
+	#editor, #accordion { margin: 0px auto; }
+	#image-goes-here { text-align: center; }
+}
 table { margin: 0px auto; }
 //.ui-widget { font-size:small !important; }
 td {font-size:small !important;}
 textarea {resize: vertical; width: 100%; min-height: 10em}
 a.example { text-decoration: none; color: #4183C4!important; }
 .help {text-align: left;}
-#image-goes-here { text-align: center; }
+#image-goes-here img { max-width: 100%; height: auto; box-sizing: border-box; }
 img { border: 1px solid #bbbbbb; }
 .nobr { white-space: nowrap; }
 .editor-tools { text-align: right; margin-top: 4px; }
