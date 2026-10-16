@@ -38,7 +38,12 @@ body {
 #title a,
 #title .btn-link {
 	font-size: 0.875rem;
+	color: var(--bs-secondary-color);
 	text-decoration: none;
+}
+#title a:hover,
+#title .btn-link:hover {
+	color: var(--bs-body-color);
 }
 #title .btn-link {
 	padding: 0;
