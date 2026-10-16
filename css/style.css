@@ -77,6 +77,11 @@ body {
 	#panels {
 		flex-basis: auto;
 	}
+	/* Stacked under the editor there's no leftover height to fill, so size to the tree instead
+	   and let the page scroll, rather than scrolling the tree inside a 300px box. */
+	#tree-panel {
+		flex: 0 0 auto;
+	}
 }
 
 .card,
@@ -140,6 +145,46 @@ body {
 	display: flex;
 	justify-content: flex-end;
 	margin-top: 8px;
+}
+/* On wide screens the right column fills the window with Options and Help pinned to the bottom,
+   so they open upward into the space below the editor, then shrink the editor if they need more.
+   If they still don't fit, the page scrolls. */
+@media not all and (max-width: 1060px) {
+	body {
+		height: calc(100vh - 20px);
+		height: calc(100dvh - 20px);
+	}
+	#layout {
+		min-height: 0;
+	}
+	#panels {
+		align-self: stretch;
+		display: flex;
+		flex-direction: column;
+	}
+	#editor {
+		flex: 0 1 auto;
+		min-height: 220px;
+	}
+	#editor .card-body,
+	#i-wrap {
+		flex: 1 1 auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+	#i {
+		flex: 0 1 auto;
+		min-height: 0;
+		resize: none;
+	}
+	#accordion {
+		flex: 0 0 auto;
+		margin-top: auto;
+	}
+	#image-goes-here {
+		min-height: 0;
+	}
 }
 
 /* Bootstrap's outline buttons use the same text color in both themes, which is too dim on dark. */
@@ -233,6 +278,11 @@ body {
 }
 [data-bs-theme="dark"] #image-goes-here {
 	background: #1c1f23 radial-gradient(#363b42 1px, transparent 1px) 0 0 / 16px 16px;
+}
+@media (max-width: 600px) {
+	#image-goes-here {
+		padding: 8px 8px 52px;
+	}
 }
 #image-goes-here img {
 	max-width: 100%;

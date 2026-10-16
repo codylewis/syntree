@@ -704,6 +704,37 @@
 				sync_highlight();
 			}
 
+			// Fits the editor's height to its text, but never below its starting rows. On wide
+			// screens the right-hand column's flex layout then shrinks it to fit the window. On
+			// narrow screens, where the panels stack, it stops at 25 lines and, unless asked to
+			// shrink, only grows, so typing never undoes a size the user dragged to.
+			function fit_editor(shrink) {
+				var ta = document.getElementById("i");
+				var narrow = window.matchMedia("(max-width: 1060px)").matches;
+				var cs = getComputedStyle(ta);
+				var line = parseFloat(cs.lineHeight);
+				var chrome =
+					ta.offsetHeight -
+					ta.clientHeight +
+					parseFloat(cs.paddingTop) +
+					parseFloat(cs.paddingBottom);
+				var min = ta.rows * line + chrome;
+				var max = narrow ? 25 * line + chrome : Infinity;
+				var current = ta.offsetHeight;
+				// Collapsing the editor to measure its text can shorten the page for a moment,
+				// which would make the browser pull the scroll position up.
+				var scroll = window.scrollY;
+				ta.style.height = min + "px";
+				var height = Math.min(
+					Math.max(ta.scrollHeight - ta.clientHeight + ta.offsetHeight, min),
+					max
+				);
+				// The current height can exceed the cap if it was set while the screen was wide.
+				if (narrow && !shrink) height = Math.max(height, Math.min(current, max));
+				ta.style.height = height + "px";
+				window.scrollTo(window.scrollX, scroll);
+			}
+
 			function sync_highlight() {
 				var ta = document.getElementById("i");
 				var hl = document.getElementById("i-highlight");
@@ -765,6 +796,7 @@
 				show_slider_values();
 				show_theme(current_theme());
 				handler();
+				fit_editor(false);
 
 				// Events
 				$("#i").keypress(auto_close_keypress);
@@ -787,7 +819,11 @@
 				});
 				$("#i").bind("input", function () {
 					handler();
+					fit_editor(false);
 					return true;
+				});
+				$(window).resize(function () {
+					fit_editor(false);
 				});
 				$("#i").scroll(sync_highlight);
 				$("#match-brackets, #indent-guides").change(highlight_brackets);
@@ -803,7 +839,7 @@
 					var ta = document.getElementById("i");
 					ta.select();
 					insert_text(ta, format_brackets(ta.value));
-					ta.rows = Math.min(Math.max(ta.value.split("\n").length, 8), 25);
+					fit_editor(true);
 					handler();
 					return false;
 				});
@@ -811,6 +847,7 @@
 					var ta = document.getElementById("i");
 					ta.select();
 					insert_text(ta, $(this).attr("data-example"));
+					fit_editor(true);
 					handler();
 					return false;
 				});
