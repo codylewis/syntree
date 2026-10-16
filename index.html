@@ -21,7 +21,10 @@
 <body>
 	<div id="accordion">
 		<h3><a href="#">Syntax Tree Generator</a></h3><div style="text-align:left">
-			<textarea id="i" rows="4">[S [NP This] [VP [V is] [^NP a wug]]]</textarea>
+			<textarea id="i" rows="8">[S [NP This] [VP [V is] [^NP a wug]]]</textarea>
+			<div class="nobr editor-tools">
+				<a href="#" id="format">Format</a>
+			</div>
 		</div>
 		
 		<h3><a href="#">Options</a></h3><div>
@@ -68,11 +71,17 @@
 						<a href="#" id="make-link">Link</a>
 					</div></td>
 				</tr>
+				<tr>
+					<td align="center" colspan="2"><div class="nobr">
+						<input type="checkbox" id="auto-close" checked /><label for="auto-close">Auto-close [ ]</label>
+					</div></td>
+				</tr>
 			</table>
 		</div>
 	
 		<h3><a href="#">Help</a></h3><div class="help">
 			<p>Use labelled bracket notation. This app will build the tree as you type and will attempt to close any brackets that you may be missing. Save the image to your computer by right-clicking on it and selecting "Save image as". For more information, including on how to draw movement lines, visit the <a href="https://github.com/mshang/syntree/wiki">wiki</a>.</p>
+			<p>This is a fork of <a href="https://github.com/mshang/syntree">mshang's Syntax Tree Generator</a>. The forked code can be found at <a href="https://github.com/codylewis/syntree">github.com/codylewis/syntree</a>.</p>
 			<h3>Examples</h3>
 			<a class="example" href="?i=[NP^ Alice]">[NP^ Alice]</a><br />
 			<a class="example" href="?i=[NP [N Alice] and [N Bob]]">[NP [N Alice] and [N Bob]]</a><br />
@@ -91,12 +100,13 @@ body { font-size: small !important; font-family: sans-serif; margin: 20px; backg
 table { margin: 0px auto; }
 //.ui-widget { font-size:small !important; }
 td {font-size:small !important;}
-textarea {resize: vertical; width: 100%}
+textarea {resize: vertical; width: 100%; min-height: 10em}
 a.example { text-decoration: none; color: #4183C4!important; }
 .help {text-align: left;}
 #image-goes-here { text-align: center; }
 img { border: 1px solid #bbbbbb; }
 .nobr { white-space: nowrap; }
+.editor-tools { text-align: right; margin-top: 4px; }
 </style>
 
 <link type="text/css" href="css/cupertino/jquery-ui-1.8.18.custom.css" rel="stylesheet" />	
@@ -158,9 +168,57 @@ try {
 return false;
 } // handler()
 
+function insert_text(ta, text) {
+	ta.focus();
+	var ok = false;
+	try {
+		ok = document.execCommand(text == "" ? "delete" : "insertText", false, text);
+	} catch (err) {}
+	if (!ok) {
+		var start = ta.selectionStart;
+		ta.value = ta.value.substring(0, start) + text + ta.value.substring(ta.selectionEnd);
+		ta.selectionStart = ta.selectionEnd = start + text.length;
+	}
+}
+
+function auto_close_keypress(e) {
+	if (!document.getElementById("auto-close").checked) return true;
+	if (e.ctrlKey || e.metaKey || e.altKey) return true;
+	var ta = this;
+	var start = ta.selectionStart;
+	var end = ta.selectionEnd;
+	var ch = String.fromCharCode(e.which);
+	
+	if (ch == "[") {
+		e.preventDefault();
+		var selected = ta.value.substring(start, end);
+		insert_text(ta, "[" + selected + "]");
+		ta.selectionStart = start + 1;
+		ta.selectionEnd = start + 1 + selected.length;
+	} else if (ch == "]" && start == end && ta.value[start] == "]") {
+		e.preventDefault();
+		ta.selectionStart = ta.selectionEnd = start + 1;
+	}
+	return true;
+}
+
+function auto_close_keydown(e) {
+	if (!document.getElementById("auto-close").checked) return true;
+	if (e.which != 8) return true;
+	var ta = this;
+	var start = ta.selectionStart;
+	if (start != ta.selectionEnd || start == 0) return true;
+	if (ta.value[start - 1] != "[" || ta.value[start] != "]") return true;
+	e.preventDefault();
+	ta.selectionStart = start - 1;
+	ta.selectionEnd = start + 1;
+	insert_text(ta, "");
+	return true;
+}
+
 $(function() {
 	// UI
-	$("#make-link, #color-check, #term-lines").button();
+	$("#make-link, #color-check, #term-lines, #format, #auto-close").button();
 	$("#font-size-slider").slider({value: 12, min: 8, max: 16, step: 1});
 	$("#vert-space-slider").slider({value: 35, min: 35, max: 70, step: 5});
 	$("#hor-space-slider").slider({value: 10, min: 10, max: 50, step: 5});
@@ -178,11 +236,21 @@ $(function() {
 	handler();
 	
 	// Events
+	$("#i").keypress(auto_close_keypress);
+	$("#i").keydown(auto_close_keydown);
 	$("#i").keypress(function() {handler(); return true;});
 	$("#i").keyup(function() {handler(); return true;});
 	$("#i").keydown(function() {handler(); return true;});
 	$("#i").change(function() {handler(); return true;});
 	$(".redraw").change(function() {return handler()});
+	$("#format").click(function() {
+		var ta = document.getElementById("i");
+		ta.select();
+		insert_text(ta, format_brackets(ta.value));
+		ta.rows = Math.min(Math.max(ta.value.split("\n").length, 8), 25);
+		handler();
+		return false;
+	});
 	$("#make-link").click(function() {
 		var loc = window.location.href;
 		loc = loc.replace(window.location.search, "");

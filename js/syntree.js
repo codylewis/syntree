@@ -392,12 +392,13 @@ function parse(str) {
 			});
 		str = str.replace(/^\s+/, "");
 		str = str.replace(/\s+$/, "");
+		str = str.replace(/\s*[\r\n\t]\s*/g, " ");
 		n.value = str;
 		return n;
 	}
 
 	var i = 1;
-	while ((str[i] != " ") && (str[i] != "[") && (str[i] != "]")) i++;
+	while ((i < str.length) && !/[\s\[\]]/.test(str[i])) i++;
 	n.value = str.substr(1, i-1)
 	n.value = n.value.replace(/\^/, 
 		function () {
@@ -412,7 +413,7 @@ function parse(str) {
 			return "";
 		});
 	
-	while (str[i] == " ") i++;
+	while (/\s/.test(str[i])) i++;
 	if (str[i] != "]") {
 		var level = 1;
 		var start = i;
@@ -432,4 +433,70 @@ function parse(str) {
 		}
 	}
 	return n;
+}
+
+function format_brackets(str, indent_unit) {
+	if (indent_unit == null) indent_unit = "  ";
+
+	str = str.replace(/^\s+/, "");
+	var open = 0;
+	for (var i = 0; i < str.length; i++) {
+		if (str[i] == "[") open++;
+		if (str[i] == "]") open--;
+	}
+	while (open < 0) { str = "[" + str; open++; }
+	while (open > 0) { str = str + "]"; open--; }
+	
+	var pos = 0;
+	
+	function read_text() {
+		var start = pos;
+		while ((pos < str.length) && (str[pos] != "[") && (str[pos] != "]")) pos++;
+		return str.substring(start, pos).replace(/\s+/g, " ").replace(/^ | $/g, "");
+	}
+	
+	function read_node() {
+		pos++;
+		var start = pos;
+		while ((pos < str.length) && !/[\s\[\]]/.test(str[pos])) pos++;
+		var node = {label: str.substring(start, pos), children: []};
+		while (pos < str.length) {
+			if (str[pos] == "]") { pos++; break; }
+			if (str[pos] == "[") { node.children.push(read_node()); continue; }
+			var text = read_text();
+			if (text != "") node.children.push(text);
+		}
+		return node;
+	}
+	
+	function write_node(node, indent) {
+		var has_phrase = false;
+		for (var i = 0; i < node.children.length; i++)
+			if (typeof node.children[i] != "string") has_phrase = true;
+		
+		var out = "[" + node.label;
+		if (!has_phrase) {
+			if (node.children.length > 0) out += " " + node.children.join(" ");
+			return out + "]";
+		}
+		var inner = indent + indent_unit;
+		for (var i = 0; i < node.children.length; i++) {
+			var child = node.children[i];
+			out += "\n" + inner +
+				(typeof child == "string" ? child : write_node(child, inner));
+		}
+		return out + "\n" + indent + "]";
+	}
+	
+	var parts = [];
+	while (pos < str.length) {
+		if (str[pos] == "[") {
+			parts.push(write_node(read_node(), ""));
+		} else {
+			var text = read_text();
+			if (text != "") parts.push(text);
+			if (str[pos] == "]") pos++;
+		}
+	}
+	return parts.join("\n");
 }
