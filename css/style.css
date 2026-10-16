@@ -136,6 +136,61 @@ body {
 	box-shadow: inset 0 0 0 1px #6e7781;
 	background-color: rgba(110, 119, 129, 0.15);
 }
+/* Three colors cycling with nesting depth, as in VS Code's bracket pair colors, so every
+   depth differs from the ones on either side. */
+.bracket-0 {
+	color: #a07800;
+}
+.bracket-1 {
+	color: #b5179e;
+}
+.bracket-2 {
+	color: #0b6bcb;
+}
+[data-bs-theme="dark"] .bracket-0 {
+	color: #ffd700;
+}
+[data-bs-theme="dark"] .bracket-1 {
+	color: #da70d6;
+}
+[data-bs-theme="dark"] .bracket-2 {
+	color: #179fff;
+}
+#i-gutter {
+	display: none;
+	position: absolute;
+	width: var(--gutter-width);
+	overflow: hidden;
+	font-family: var(--bs-font-monospace);
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--bs-secondary-color);
+	background-color: var(--bs-tertiary-bg);
+	border-right: 1px solid var(--bs-border-color);
+	border-radius: var(--bs-border-radius) 0 0 var(--bs-border-radius);
+	pointer-events: none;
+	user-select: none;
+}
+#i-gutter div {
+	position: absolute;
+	left: 0;
+	right: 0;
+	padding-right: 0.75ch;
+	text-align: right;
+}
+#i-wrap.numbered #i-gutter {
+	display: block;
+}
+#i-wrap.numbered #i {
+	padding-left: calc(var(--gutter-width) + 0.5rem);
+}
+/* An inline block as tall as a line, so its offsetTop is the top of the line it starts. */
+.line-start {
+	display: inline-block;
+	width: 0;
+	height: 1.5em;
+	vertical-align: top;
+}
 [data-bs-theme="dark"] .bracket-match {
 	box-shadow: inset 0 0 0 1px #8b949e;
 	background-color: rgba(139, 148, 158, 0.2);

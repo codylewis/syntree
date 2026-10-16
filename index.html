@@ -46,6 +46,7 @@
 					<div class="card-body">
 						<div id="i-wrap" class="highlighting">
 							<div id="i-highlight" aria-hidden="true"></div>
+							<div id="i-gutter" aria-hidden="true"></div>
 							<textarea
 								id="i"
 								class="form-control"
@@ -309,6 +310,27 @@
 											class="btn btn-sm btn-outline-primary"
 											for="indent-guides"
 											>Indent guides</label
+										>
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="bracket-colors"
+											autocomplete="off"
+											checked
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="bracket-colors"
+											>Bracket colors</label
+										>
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="line-numbers"
+											autocomplete="off"
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="line-numbers"
+											>Line numbers</label
 										>
 									</div>
 								</div>
@@ -659,16 +681,21 @@
 				return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 			}
 
-			// While either editor highlight is on, the textarea's text is transparent and this
+			// While any editor highlight is on, the textarea's text is transparent and this
 			// layer behind it shows the same text with the bracket next to the cursor boxed
-			// along with its partner, and indent guides.
+			// along with its partner, indent guides, and brackets colored by depth. For line
+			// numbers it also marks where each line starts, so wrapped lines can be measured.
 			function highlight_brackets() {
 				var ta = document.getElementById("i");
 				var hl = document.getElementById("i-highlight");
+				var wrap = document.getElementById("i-wrap");
 				var match = document.getElementById("match-brackets").checked;
 				var guides = document.getElementById("indent-guides").checked;
-				var on = match || guides;
-				document.getElementById("i-wrap").classList.toggle("highlighting", on);
+				var colors = document.getElementById("bracket-colors").checked;
+				var numbers = document.getElementById("line-numbers").checked;
+				var on = match || guides || colors || numbers;
+				wrap.classList.toggle("highlighting", on);
+				wrap.classList.toggle("numbered", numbers);
 				if (!on) return;
 
 				var str = ta.value;
@@ -693,10 +720,19 @@
 					}
 				}
 
+				var lines = str.split("\n").length;
+				wrap.style.setProperty(
+					"--gutter-width",
+					Math.max(2, String(lines).length) + 2 + "ch"
+				);
+
 				var indent = /(?:\t| {2})+/y;
+				var line_start = '<span class="line-start"></span>';
+				var depth = 0;
 				var html = "";
 				var i = 0;
 				while (i < str.length) {
+					if (numbers && (i == 0 || str[i - 1] == "\n")) html += line_start;
 					if (guides && (i == 0 || str[i - 1] == "\n")) {
 						indent.lastIndex = i;
 						var m = indent.exec(str);
@@ -708,13 +744,21 @@
 							continue;
 						}
 					}
-					if (matched[i]) {
-						html += '<span class="bracket-match">' + str[i] + "</span>";
+					var classes = [];
+					if (matched[i]) classes.push("bracket-match");
+					if (colors && (str[i] == "[" || str[i] == "]")) {
+						if (str[i] == "]") depth = Math.max(0, depth - 1);
+						classes.push("bracket-" + (depth % 3));
+						if (str[i] == "[") depth++;
+					}
+					if (classes.length) {
+						html += '<span class="' + classes.join(" ") + '">' + str[i] + "</span>";
 					} else {
 						html += escape_html(str[i]);
 					}
 					i++;
 				}
+				if (numbers && (str == "" || str[str.length - 1] == "\n")) html += line_start;
 				// The trailing space keeps a final empty line from collapsing.
 				hl.innerHTML = html + " ";
 				sync_highlight();
@@ -763,6 +807,21 @@
 				hl.style.padding = cs.padding;
 				hl.scrollTop = ta.scrollTop;
 				hl.scrollLeft = ta.scrollLeft;
+
+				// Number each line at the height its start lands at, so a wrapped line gets
+				// one number.
+				if (!document.getElementById("i-wrap").classList.contains("numbered")) return;
+				var gutter = document.getElementById("i-gutter");
+				gutter.style.top = ta.clientTop + "px";
+				gutter.style.left = ta.clientLeft + "px";
+				gutter.style.height = ta.clientHeight + "px";
+				var starts = hl.getElementsByClassName("line-start");
+				var html = "";
+				for (var n = 0; n < starts.length; n++) {
+					var top = starts[n].offsetTop - ta.scrollTop;
+					html += '<div style="top: ' + top + 'px">' + (n + 1) + "</div>";
+				}
+				gutter.innerHTML = html;
 			}
 
 			function auto_close_keypress(e) {
@@ -842,7 +901,13 @@
 					fit_editor(false);
 				});
 				$("#i").scroll(sync_highlight);
-				$("#match-brackets, #indent-guides").change(highlight_brackets);
+				$("#match-brackets, #indent-guides, #bracket-colors").change(highlight_brackets);
+				// The gutter narrows the text, which can rewrap it and change the editor's height.
+				$("#line-numbers").change(function () {
+					highlight_brackets();
+					fit_editor(true);
+					sync_highlight();
+				});
 				$(document).bind("selectionchange", highlight_brackets);
 				$("#i").bind("focus blur", highlight_brackets);
 				if (window.ResizeObserver) {
