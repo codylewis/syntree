@@ -5,7 +5,7 @@ var margin = 15; // Number of pixels from tree to edge on each side.
 var padding_above_text = 6; // Lines will end this many pixels above text.
 var padding_below_text = 6;
 
-function Node() {
+function TreeNode() {
 	this.value = null;
 	this.step = null; // Horizontal distance between children.
 	this.draw_triangle = null;
@@ -26,7 +26,7 @@ function Node() {
 	this.starred = null;
 }
 
-Node.prototype.set_siblings = function (parent) {
+TreeNode.prototype.set_siblings = function (parent) {
 	for (var i = 0; i < this.children.length; i++) this.children[i].set_siblings(this);
 
 	this.has_children = this.children.length > 0;
@@ -42,14 +42,14 @@ Node.prototype.set_siblings = function (parent) {
 	for (var i = 1; i < this.children.length; i++) this.children[i].previous = this.children[i - 1];
 };
 
-Node.prototype.check_triangle = function () {
+TreeNode.prototype.check_triangle = function () {
 	this.draw_triangle = 0;
 	if (!this.has_children && this.parent && this.parent.starred) this.draw_triangle = 1;
 
 	for (var child = this.first; child != null; child = child.next) child.check_triangle();
 };
 
-Node.prototype.set_width = function (ctx, vert_space, hor_space, term_font, nonterm_font) {
+TreeNode.prototype.set_width = function (ctx, vert_space, hor_space, term_font, nonterm_font) {
 	ctx.font = term_font;
 	if (this.has_children) ctx.font = nonterm_font;
 
@@ -85,14 +85,14 @@ Node.prototype.set_width = function (ctx, vert_space, hor_space, term_font, nont
 	this.right_width = Math.max(this.right_width, val_width / 2);
 };
 
-Node.prototype.find_height = function () {
+TreeNode.prototype.find_height = function () {
 	this.max_y = this.y;
 	for (var child = this.first; child != null; child = child.next)
 		this.max_y = Math.max(this.max_y, child.find_height());
 	return this.max_y;
 };
 
-Node.prototype.assign_location = function (x, y, font_size, term_lines) {
+TreeNode.prototype.assign_location = function (x, y, font_size, term_lines) {
 	// floor + 0.5 for antialiasing
 	this.x = Math.floor(x) + 0.5;
 	this.y = Math.floor(y) + 0.5;
@@ -112,7 +112,7 @@ Node.prototype.assign_location = function (x, y, font_size, term_lines) {
 	}
 };
 
-Node.prototype.draw = function (ctx, font_size, term_font, nonterm_font, color, term_lines) {
+TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, color, term_lines) {
 	ctx.font = term_font;
 	if (this.has_children) ctx.font = nonterm_font;
 
@@ -144,7 +144,7 @@ Node.prototype.draw = function (ctx, font_size, term_font, nonterm_font, color, 
 	ctx.stroke();
 };
 
-Node.prototype.find_head = function (label) {
+TreeNode.prototype.find_head = function (label) {
 	for (var child = this.first; child != null; child = child.next) {
 		var res = child.find_head(label);
 		if (res != null) return res;
@@ -154,7 +154,7 @@ Node.prototype.find_head = function (label) {
 	return null;
 };
 
-Node.prototype.find_movement = function (mlarr, root) {
+TreeNode.prototype.find_movement = function (mlarr, root) {
 	for (var child = this.first; child != null; child = child.next)
 		child.find_movement(mlarr, root);
 
@@ -166,14 +166,14 @@ Node.prototype.find_movement = function (mlarr, root) {
 	}
 };
 
-Node.prototype.reset_chains = function () {
+TreeNode.prototype.reset_chains = function () {
 	this.head_chain = null;
 	this.tail_chain = null;
 
 	for (var child = this.first; child != null; child = child.next) child.reset_chains();
 };
 
-Node.prototype.find_intervening_height = function (leftwards) {
+TreeNode.prototype.find_intervening_height = function (leftwards) {
 	var max_y = this.y;
 
 	var n = this;
@@ -401,7 +401,7 @@ function subscriptify(in_str) {
 }
 
 function parse(str) {
-	var n = new Node();
+	var n = new TreeNode();
 
 	if (str[0] != "[") {
 		// Text node
