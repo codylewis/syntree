@@ -10,7 +10,7 @@ body { margin: 10px; font-size: 15px; background-color: #f5f6f8; }
 
 #layout { display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 10px; }
 #panels { flex: 0 0 500px; min-width: 0; }
-#image-goes-here { flex: 1 1 0; min-width: 0; min-height: 300px; align-self: stretch; }
+#tree-panel { position: relative; flex: 1 1 0; min-width: 0; min-height: 300px; align-self: stretch; display: flex; }
 @media (max-width: 1060px) {
 	#layout { flex-direction: column; align-items: stretch; }
 	#panels { flex-basis: auto; }
@@ -39,9 +39,11 @@ body { margin: 10px; font-size: 15px; background-color: #f5f6f8; }
 a.example { font-family: var(--bs-font-monospace); font-size: 0.8125rem; text-decoration: none; }
 
 #image-goes-here {
-	display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow: auto;
+	flex: 1 1 auto; min-width: 0;
+	display: flex; align-items: flex-start; justify-content: center; padding: 24px 24px 56px; overflow: auto;
 	background: #fff radial-gradient(#dfe2e7 1px, transparent 1px) 0 0 / 16px 16px;
 	border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius);
 	box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
 #image-goes-here img { max-width: 100%; height: auto; border: 1px solid var(--bs-border-color); border-radius: 6px; box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08); }
+#copy-tree { position: absolute; right: 12px; bottom: 12px; border: 1px solid var(--bs-border-color); box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); }

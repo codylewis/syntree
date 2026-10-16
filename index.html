@@ -114,7 +114,10 @@
 	</div>
 	</div>
 
-	<div id="image-goes-here"></div>
+	<div id="tree-panel">
+		<div id="image-goes-here"></div>
+		<button type="button" id="copy-tree" class="btn btn-sm btn-light">Copy tree</button>
+	</div>
 	</div>
 
 <script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
@@ -171,6 +174,25 @@ try {
 } // try-catch
 return false;
 } // handler()
+
+function copy_tree() {
+	var btn = this;
+	var img = $("#image-goes-here img")[0];
+	if (!img) return false;
+	var done = function(text) {
+		$(btn).text(text);
+		clearTimeout(btn.reset);
+		btn.reset = setTimeout(function() {$(btn).text("Copy tree");}, 1500);
+	};
+	try {
+		var blob = fetch(img.src).then(function(r) {return r.blob();});
+		navigator.clipboard.write([new ClipboardItem({"image/png": blob})])
+			.then(function() {done("Copied");}, function() {done("Copy failed");});
+	} catch (err) {
+		done("Copy failed");
+	}
+	return false;
+}
 
 function insert_text(ta, text) {
 	ta.focus();
@@ -247,6 +269,7 @@ $(function() {
 		handler();
 		return false;
 	});
+	$("#copy-tree").click(copy_tree);
 	$("#make-link").click(function() {
 		var loc = window.location.href;
 		loc = loc.replace(window.location.search, "");
