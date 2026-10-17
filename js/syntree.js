@@ -70,14 +70,16 @@ TreeNode.prototype.set_width = function (ctx, vert_space, hor_space, term_font, 
 		ctx.font = index_font(font);
 		this.index_width = ctx.measureText(this.index).width;
 	}
-	var val_width = this.value_width + this.index_width;
+	// The label is centered on the node and the index hangs off its right side.
+	var val_left = this.value_width / 2;
+	var val_right = this.value_width / 2 + this.index_width;
 
 	for (var child = this.first; child != null; child = child.next)
 		child.set_width(ctx, vert_space, hor_space, term_font, nonterm_font);
 
 	if (!this.has_children) {
-		this.left_width = val_width / 2;
-		this.right_width = val_width / 2;
+		this.left_width = val_left;
+		this.right_width = val_right;
 		return;
 	}
 
@@ -98,8 +100,8 @@ TreeNode.prototype.set_width = function (ctx, vert_space, hor_space, term_font, 
 		this.right_width = sub + this.last.right_width;
 	}
 
-	this.left_width = Math.max(this.left_width, val_width / 2);
-	this.right_width = Math.max(this.right_width, val_width / 2);
+	this.left_width = Math.max(this.left_width, val_left);
+	this.right_width = Math.max(this.right_width, val_right);
 };
 
 TreeNode.prototype.find_height = function () {
@@ -139,17 +141,16 @@ TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, col
 		if (this.has_children) ctx.fillStyle = "blue";
 	}
 
+	// Center the label on the node so lines meet it squarely, with the index trailing it.
+	ctx.fillText(this.value, this.x, this.y);
 	if (this.index) {
-		// Center the label and index together as one piece of text.
-		var left = this.x - (this.value_width + this.index_width) / 2;
-		ctx.fillText(this.value, left + this.value_width / 2, this.y);
 		ctx.font = index_font(font);
 		ctx.fillText(
 			this.index,
-			left + this.value_width + this.index_width / 2,
+			this.x + this.value_width / 2 + this.index_width / 2,
 			this.y + font_size * index_drop
 		);
-	} else ctx.fillText(this.value, this.x, this.y);
+	}
 	for (var child = this.first; child != null; child = child.next)
 		child.draw(ctx, font_size, term_font, nonterm_font, color, term_lines);
 
