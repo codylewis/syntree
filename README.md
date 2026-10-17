@@ -9,7 +9,7 @@ The goal of this project is to create a browser-based, fully local syntax tree g
 
 For more details, see the [wiki](https://github.com/mshang/syntree/wiki).
 
-This fork can be found at <https://codylewis.github.io/syntree/>. The original app is at <http://mshang.ca/syntree/>.
+This fork can be found at <https://syntaxtree.codylewis.net/>. The original app is at <http://mshang.ca/syntree/>.
 
 By the way, here are a few great alternatives:
 
