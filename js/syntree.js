@@ -4,9 +4,20 @@ var debug = true;
 var margin = 15; // Number of pixels from tree to edge on each side.
 var padding_above_text = 6; // Lines will end this many pixels above text.
 var padding_below_text = 6;
+var index_scale = 0.65; // Size of a numeric index like the 1 in NP_1, relative to the label.
+var index_drop = 0.25; // How far the index sits below the baseline, as a share of the font size.
+
+// The font for a node's index: the label's font at a smaller size. This takes the font as it
+// was given, since a canvas reports its font back in px rather than pt.
+function index_font(font) {
+	return font.replace(/(\d+(?:\.\d+)?)pt/, function (match, size) {
+		return Math.round(size * index_scale * 100) / 100 + "pt";
+	});
+}
 
 function TreeNode() {
 	this.value = null;
+	this.index = null; // A numeric label, drawn as a subscript after the value.
 	this.step = null; // Horizontal distance between children.
 	this.draw_triangle = null;
 	this.label = null; // Head of movement.
@@ -50,10 +61,16 @@ TreeNode.prototype.check_triangle = function () {
 };
 
 TreeNode.prototype.set_width = function (ctx, vert_space, hor_space, term_font, nonterm_font) {
-	ctx.font = term_font;
-	if (this.has_children) ctx.font = nonterm_font;
+	var font = this.has_children ? nonterm_font : term_font;
+	ctx.font = font;
 
-	var val_width = ctx.measureText(this.value).width;
+	this.value_width = ctx.measureText(this.value).width;
+	this.index_width = 0;
+	if (this.index) {
+		ctx.font = index_font(font);
+		this.index_width = ctx.measureText(this.index).width;
+	}
+	var val_width = this.value_width + this.index_width;
 
 	for (var child = this.first; child != null; child = child.next)
 		child.set_width(ctx, vert_space, hor_space, term_font, nonterm_font);
@@ -113,8 +130,8 @@ TreeNode.prototype.assign_location = function (x, y, font_size, term_lines) {
 };
 
 TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, color, term_lines) {
-	ctx.font = term_font;
-	if (this.has_children) ctx.font = nonterm_font;
+	var font = this.has_children ? nonterm_font : term_font;
+	ctx.font = font;
 
 	ctx.fillStyle = "black";
 	if (color) {
@@ -122,7 +139,17 @@ TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, col
 		if (this.has_children) ctx.fillStyle = "blue";
 	}
 
-	ctx.fillText(this.value, this.x, this.y);
+	if (this.index) {
+		// Center the label and index together as one piece of text.
+		var left = this.x - (this.value_width + this.index_width) / 2;
+		ctx.fillText(this.value, left + this.value_width / 2, this.y);
+		ctx.font = index_font(font);
+		ctx.fillText(
+			this.index,
+			left + this.value_width + this.index_width / 2,
+			this.y + font_size * index_drop
+		);
+	} else ctx.fillText(this.value, this.x, this.y);
 	for (var child = this.first; child != null; child = child.next)
 		child.draw(ctx, font_size, term_font, nonterm_font, color, term_lines);
 
@@ -501,45 +528,6 @@ function go(
 	return img;
 }
 
-function subscriptify(in_str) {
-	var out_str = "";
-	for (var i = 0; i < in_str.length; ++i) {
-		switch (in_str[i]) {
-			case "0":
-				out_str = out_str + "₀";
-				break;
-			case "1":
-				out_str = out_str + "₁";
-				break;
-			case "2":
-				out_str = out_str + "₂";
-				break;
-			case "3":
-				out_str = out_str + "₃";
-				break;
-			case "4":
-				out_str = out_str + "₄";
-				break;
-			case "5":
-				out_str = out_str + "₅";
-				break;
-			case "6":
-				out_str = out_str + "₆";
-				break;
-			case "7":
-				out_str = out_str + "₇";
-				break;
-			case "8":
-				out_str = out_str + "₈";
-				break;
-			case "9":
-				out_str = out_str + "₉";
-				break;
-		}
-	}
-	return out_str;
-}
-
 function parse(str) {
 	var n = new TreeNode();
 
@@ -567,7 +555,7 @@ function parse(str) {
 	});
 	n.value = n.value.replace(/_(\w+)$/, function (match, label) {
 		n.label = label;
-		if (n.label.search(/^\d+$/) != -1) return subscriptify(n.label);
+		if (n.label.search(/^\d+$/) != -1) n.index = n.label;
 		return "";
 	});
 
