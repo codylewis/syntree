@@ -1038,6 +1038,18 @@
 					handler();
 					return true;
 				});
+				// The tree is drawn at the screen's pixel density, so redraw it when that changes
+				// (zooming, or moving the window to another screen).
+				(function watch_density() {
+					if (!window.matchMedia) return;
+					var mq = window.matchMedia("(resolution: " + window.devicePixelRatio + "dppx)");
+					var changed = function () {
+						mq.removeListener(changed);
+						handler();
+						watch_density();
+					};
+					mq.addListener(changed);
+				})();
 			});
 		</script>
 	</body>

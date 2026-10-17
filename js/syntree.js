@@ -473,10 +473,14 @@ function go(
 			break;
 		}
 
+	// Draw at the screen's pixel density, then show the image at its normal size, so the
+	// tree stays sharp on high-DPI screens without taking up more room.
+	var scale = Math.max(1, window.devicePixelRatio || 1);
 	canvas.id = "canvas";
-	canvas.width = width;
-	canvas.height = height;
+	canvas.width = Math.ceil(width * scale);
+	canvas.height = Math.ceil(height * scale);
 	if (as_svg) ctx = new SvgContext(width, height);
+	else ctx.scale(scale, scale);
 	ctx.fillStyle = "rgb(255, 255, 255)";
 	ctx.fillRect(0, 0, width, height);
 	ctx.fillStyle = "rgb(0, 0, 0)";
@@ -491,7 +495,10 @@ function go(
 
 	if (as_svg) return ctx.to_svg();
 	// Swap out the image
-	return Canvas2Image.saveAsPNG(canvas, true);
+	var img = Canvas2Image.saveAsPNG(canvas, true);
+	img.width = Math.ceil(width);
+	img.height = Math.ceil(height);
+	return img;
 }
 
 function subscriptify(in_str) {
