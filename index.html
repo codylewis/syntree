@@ -406,6 +406,10 @@
 								<ul class="key-combos">
 									<li><kbd>\0</kbd> ∅, an empty head</li>
 									<li>
+										<kbd>\NP</kbd>, <kbd>\VP</kbd>, <kbd>\AdjP</kbd>, <kbd>\AdvP</kbd>,
+										<kbd>\TP</kbd>, <kbd>\CP</kbd> The phrase built out, ready for words
+									</li>
+									<li>
 										<kbd>Shift</kbd>+<kbd>Enter</kbd> New line without indent
 									</li>
 								</ul>
@@ -882,16 +886,48 @@
 				gutter.innerHTML = html;
 			}
 
-			// Typing \0 gives ∅, an empty head. Undo brings back the backslash.
+			// Phrase skeletons for the \NP, \VP, ... shortcuts. TP and CP are built from the
+			// smaller phrases so the NP, VP and TP inside them always match their own shortcuts.
+			function bar_phrase(head) {
+				return "[" + head + "P [" + head + "' [" + head + "' [" + head + " ]]]]";
+			}
+			var phrases = {
+				AdjP: bar_phrase("Adj"),
+				AdvP: bar_phrase("Adv"),
+				VP: bar_phrase("V"),
+				NP: "[NP [D ] [N' [N' [N ]]]]",
+			};
+			phrases.TP = "[TP " + phrases.NP + " [T' [T ] " + phrases.VP + "]]";
+			phrases.CP = "[CP [C' [C ] " + phrases.TP + "]]";
+
+			// Typing \0 gives ∅, an empty head, and typing \NP, \VP, \TP, \CP, \AdjP or \AdvP
+			// builds out that phrase with the cursor in its first head. Undo brings back
+			// what was typed.
 			function symbol_keypress(e) {
 				if (e.ctrlKey || e.metaKey || e.altKey) return true;
 				var ta = this;
 				var start = ta.selectionStart;
-				if (String.fromCharCode(e.which) != "0" || start != ta.selectionEnd) return true;
-				if (ta.value[start - 1] != "\\") return true;
+				if (start != ta.selectionEnd) return true;
+				var ch = String.fromCharCode(e.which);
+				if (ch == "0" && ta.value[start - 1] == "\\") {
+					e.preventDefault();
+					ta.selectionStart = start - 1;
+					insert_text(ta, "∅");
+					return true;
+				}
+				if (ch != "P" && ch != "p") return true;
+				var m = /\\(Adj|Adv|V|N|T|C)$/i.exec(ta.value.substring(0, start));
+				if (!m) return true;
+				var key = (m[1] + "p").toLowerCase();
+				var name = Object.keys(phrases).filter(function (k) {
+					return k.toLowerCase() == key;
+				})[0];
+				var text = phrases[name];
 				e.preventDefault();
-				ta.selectionStart = start - 1;
-				insert_text(ta, "∅");
+				var from = start - m[0].length;
+				ta.selectionStart = from;
+				insert_text(ta, text);
+				ta.selectionStart = ta.selectionEnd = from + text.indexOf(" ]") + 1;
 				return true;
 			}
 
