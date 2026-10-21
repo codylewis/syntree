@@ -641,19 +641,35 @@ function read_brackets(str) {
 	return parts;
 }
 
+// Write a node and everything under it on one line, e.g. "[VP [V is] [NP a wug]]".
+function write_inline(node) {
+	var out = "[" + node.label;
+	for (var i = 0; i < node.children.length; i++) {
+		var child = node.children[i];
+		out += " " + (typeof child == "string" ? child : write_inline(child));
+	}
+	return out + "]";
+}
+
+// Whether a node never branches, like an XP or X' with no complements or adjuncts:
+// "[NP [N' [N wug]]]" fits on one line.
+function is_unary(node) {
+	if (node.children.length == 0) return true;
+	if (node.children.length > 1) {
+		for (var i = 0; i < node.children.length; i++)
+			if (typeof node.children[i] != "string") return false;
+		return true;
+	}
+	var child = node.children[0];
+	return typeof child == "string" || is_unary(child);
+}
+
 function format_brackets(str, indent_unit) {
 	if (indent_unit == null) indent_unit = "  ";
 
 	function write_node(node, indent) {
-		var has_phrase = false;
-		for (var i = 0; i < node.children.length; i++)
-			if (typeof node.children[i] != "string") has_phrase = true;
-
+		if (is_unary(node)) return write_inline(node);
 		var out = "[" + node.label;
-		if (!has_phrase) {
-			if (node.children.length > 0) out += " " + node.children.join(" ");
-			return out + "]";
-		}
 		var inner = indent + indent_unit;
 		for (var i = 0; i < node.children.length; i++) {
 			var child = node.children[i];
@@ -671,18 +687,9 @@ function format_brackets(str, indent_unit) {
 
 // Put the whole tree on one line, e.g. "[S [NP This] [VP [V is] [^NP a wug]]]".
 function minify_brackets(str) {
-	function write_node(node) {
-		var out = "[" + node.label;
-		for (var i = 0; i < node.children.length; i++) {
-			var child = node.children[i];
-			out += " " + (typeof child == "string" ? child : write_node(child));
-		}
-		return out + "]";
-	}
-
 	return read_brackets(str)
 		.map(function (part) {
-			return typeof part == "string" ? part : write_node(part);
+			return typeof part == "string" ? part : write_inline(part);
 		})
 		.join(" ");
 }
