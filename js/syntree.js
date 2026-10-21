@@ -35,7 +35,25 @@ function TreeNode() {
 	this.head_chain = null;
 	this.tail_chain = null;
 	this.starred = null;
+	this.bracketed = false; // Written as [label ...] rather than as text.
+	this.marked = false; // Drawn in red and bold as an empty node.
 }
+
+// A bracketed XP or head with nothing under it, like [D ]. An empty X' is fine.
+TreeNode.prototype.is_empty = function () {
+	return this.bracketed && !this.has_children && this.value.indexOf("'") == -1;
+};
+
+// Marks empty nodes to be drawn in red and bold so they stand out on screen.
+TreeNode.prototype.mark_empty = function () {
+	this.marked = this.is_empty();
+	for (var i = 0; i < this.children.length; i++) this.children[i].mark_empty();
+};
+
+TreeNode.prototype.font = function (term_font, nonterm_font) {
+	if (this.marked) return /\bbold\b/.test(nonterm_font) ? nonterm_font : "bold " + nonterm_font;
+	return this.has_children ? nonterm_font : term_font;
+};
 
 TreeNode.prototype.set_siblings = function (parent) {
 	for (var i = 0; i < this.children.length; i++) this.children[i].set_siblings(this);
@@ -61,7 +79,7 @@ TreeNode.prototype.check_triangle = function () {
 };
 
 TreeNode.prototype.set_width = function (ctx, vert_space, hor_space, term_font, nonterm_font) {
-	var font = this.has_children ? nonterm_font : term_font;
+	var font = this.font(term_font, nonterm_font);
 	ctx.font = font;
 
 	this.value_width = ctx.measureText(this.value).width;
@@ -132,7 +150,7 @@ TreeNode.prototype.assign_location = function (x, y, font_size, term_lines) {
 };
 
 TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, color, term_lines) {
-	var font = this.has_children ? nonterm_font : term_font;
+	var font = this.font(term_font, nonterm_font);
 	ctx.font = font;
 
 	ctx.fillStyle = "black";
@@ -140,6 +158,7 @@ TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, col
 		ctx.fillStyle = "green";
 		if (this.has_children) ctx.fillStyle = "blue";
 	}
+	if (this.marked) ctx.fillStyle = "#d92d20";
 
 	// Center the label on the node so lines meet it squarely, with the index trailing it.
 	ctx.fillText(this.value, this.x, this.y);
@@ -446,7 +465,8 @@ function go(
 	hor_space,
 	color,
 	term_lines,
-	as_svg
+	as_svg,
+	plain // Leave empty nodes unmarked, for copying and downloading.
 ) {
 	// Clean up the string
 	str = str.replace(/^\s+/, "");
@@ -467,6 +487,7 @@ function go(
 	var root = parse(str);
 	root.set_siblings(null);
 	root.check_triangle();
+	if (!plain) root.mark_empty();
 
 	var canvas;
 	var ctx;
@@ -547,6 +568,7 @@ function parse(str) {
 		return n;
 	}
 
+	n.bracketed = true;
 	var i = 1;
 	while (i < str.length && !/[\s\[\]]/.test(str[i])) i++;
 	n.value = str.substr(1, i - 1);

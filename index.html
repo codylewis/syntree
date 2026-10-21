@@ -525,8 +525,9 @@
 
 					// Get the string.
 					var str = document.getElementById("i").value;
-					var problem = check_input(str);
-					show_status(problem);
+					var problems = check_input(str);
+					show_status(problems);
+					var problem = problems[0];
 					if (problem && problem.level == "empty") {
 						$("#image-goes-here")
 							.empty()
@@ -564,15 +565,47 @@
 				return false;
 			} // handler()
 
-			// Returns the most important problem with the input, or null if there is none.
+			// Returns every problem with the input, most important first.
 			function check_input(str) {
 				if (/^\s*$/.test(str))
-					return {
-						level: "empty",
-						text: "Type a tree in labelled bracket notation, e.g. [S [NP Alice] [VP sleeps]]",
-					};
+					return [
+						{
+							level: "empty",
+							text: "Type a tree in labelled bracket notation, e.g. [S [NP Alice] [VP sleeps]]",
+						},
+					];
 				if (!/^\s*\[/.test(str))
-					return { level: "error", text: "Start the tree with [ and a label, e.g. [S" };
+					return [{ level: "error", text: "Start the tree with [ and a label, e.g. [S" }];
+
+				var problems = [];
+
+				// XPs and heads with nothing under them are drawn in red in the tree, so they're
+				// only summed up here. An empty X' is fine.
+				var empty = /\[([^\s\[\]]+)\s*\]/g;
+				var count = 0;
+				var lines = [];
+				var m;
+				while ((m = empty.exec(str))) {
+					if (m[1].indexOf("'") != -1) continue;
+					count++;
+					var at = str.substring(0, m.index).split("\n").length;
+					if (lines.indexOf(at) == -1) lines.push(at);
+				}
+				if (count > 0) {
+					var list =
+						lines.length == 1
+							? "line " + lines[0]
+							: "lines " + lines.slice(0, -1).join(", ") + " and " + lines[lines.length - 1];
+					problems.push({
+						level: "info",
+						lines: true,
+						text:
+							(count == 1 ? "1 empty node" : count + " empty nodes") +
+							", shown in red, on " +
+							list +
+							".",
+					});
+				}
 
 				var open = 0;
 				var line = 1;
@@ -580,16 +613,20 @@
 					if (str[i] == "\n") line++;
 					if (str[i] == "[") open++;
 					if (str[i] == "]") open--;
-					if (open < 0)
-						return { level: "warning", text: "Extra ] on line " + line + "." };
-					if (open == 0 && i < str.length - 1 && /\S/.test(str.substring(i + 1)))
-						return {
+					if (open < 0) {
+						problems.push({ level: "warning", text: "Extra ] on line " + line + "." });
+						break;
+					}
+					if (open == 0 && i < str.length - 1 && /\S/.test(str.substring(i + 1))) {
+						problems.push({
 							level: "warning",
 							text:
 								"Text after the closing ] on line " +
 								line +
 								" is outside the tree.",
-						};
+						});
+						break;
+					}
 				}
 
 				var labels = {};
@@ -600,7 +637,7 @@
 				for (var i = 0; i < tails.length; i++) {
 					var name = tails[i].slice(1, -1);
 					if (!labels[name])
-						return {
+						problems.push({
 							level: "warning",
 							text:
 								"No node is labelled _" +
@@ -608,28 +645,48 @@
 								" for " +
 								tails[i] +
 								", so its movement line isn't drawn.",
-						};
+						});
 				}
 
 				if (open > 0)
-					return {
+					problems.push({
 						level: "info",
 						text:
 							open +
 							(open == 1 ? " bracket is" : " brackets are") +
 							" unclosed and will be closed automatically.",
-					};
-				return null;
+					});
+				var order = { error: 0, warning: 1, info: 2 };
+				return problems.sort(function (a, b) {
+					return order[a.level] - order[b.level];
+				});
 			}
 
-			function show_status(problem) {
+			// Shows one problem, or a list of them, each on its own line.
+			// Leaves the messages alone if they haven't changed, so a click on one isn't lost when
+			// the editor's blur redraws the tree between mousedown and click.
+			function show_status(problems) {
 				var el = $("#tree-status");
-				el.removeClass("status-info status-warning status-error");
-				if (!problem || problem.level == "empty") {
-					el.text("");
-					return;
+				if (!$.isArray(problems)) problems = problems ? [problems] : [];
+				var numbers = document.getElementById("line-numbers").checked;
+				var key = JSON.stringify(problems) + numbers;
+				if (el.data("key") === key) return;
+				el.data("key", key).empty();
+				for (var i = 0; i < problems.length; i++) {
+					if (problems[i].level == "empty") continue;
+					var box = $("<div></div>")
+						.addClass("status-" + problems[i].level)
+						.text(problems[i].text);
+					if (problems[i].lines && !numbers)
+						box.append(
+							$('<button type="button" class="status-action">Turn on line numbers</button>').click(
+								function () {
+									$("#line-numbers").prop("checked", true).change();
+								}
+							)
+						);
+					el.append(box);
 				}
-				el.addClass("status-" + problem.level).text(problem.text);
 			}
 
 			function show_slider_values() {
@@ -686,8 +743,9 @@
 
 			function copy_tree() {
 				var btn = this;
-				var img = $("#image-goes-here img")[0];
-				if (!img) return false;
+				if (!last_tree) return false;
+				// Copy the tree without empty nodes marked in red.
+				var img = go.apply(null, last_tree.concat([false, true]));
 				var done = function (text) {
 					flash(btn, text);
 				};
@@ -711,7 +769,7 @@
 
 			function download_svg() {
 				if (!last_tree) return false;
-				var svg = go.apply(null, last_tree.concat([true]));
+				var svg = go.apply(null, last_tree.concat([true, true]));
 				var url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
 				var a = document.createElement("a");
 				a.href = url;
@@ -997,6 +1055,10 @@
 					document.getElementById("i").value = qs;
 				} catch (err) {}
 
+				try {
+					if (localStorage.getItem("line-numbers") == "on")
+						document.getElementById("line-numbers").checked = true;
+				} catch (err) {}
 				show_slider_values();
 				show_theme(current_theme());
 				handler();
@@ -1035,6 +1097,10 @@
 				$("#match-brackets, #indent-guides, #bracket-colors").change(highlight_brackets);
 				// The gutter narrows the text, which can rewrap it and change the editor's height.
 				$("#line-numbers").change(function () {
+					try {
+						localStorage.setItem("line-numbers", this.checked ? "on" : "off");
+					} catch (err) {}
+					handler();
 					highlight_brackets();
 					fit_editor(true);
 					sync_highlight();
