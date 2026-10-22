@@ -496,6 +496,7 @@
 		<script type="text/javascript">
 			// The arguments the current tree was drawn with, so it can be drawn again as SVG.
 			var last_tree = null;
+			var last_drawn = null;
 
 			function handler() {
 				highlight_brackets();
@@ -533,6 +534,7 @@
 							.empty()
 							.append($('<p class="tree-hint"></p>').text(problem.text));
 						$("#copy-tree, #download-svg").prop("disabled", true);
+						last_drawn = null;
 						return false;
 					}
 					if (problem && problem.level == "error") return false;
@@ -547,8 +549,13 @@
 						color,
 						term_lines,
 					];
+					// Keep the image if it would come out the same, e.g. when the editor's blur
+					// fires a change. Replacing it while its context menu opens breaks Copy Image.
+					var key = JSON.stringify(args) + window.devicePixelRatio;
+					if (key == last_drawn) return false;
 					var img = go.apply(null, args);
 					last_tree = args;
+					last_drawn = key;
 					$("#image-goes-here").empty();
 					$("#image-goes-here").append(img);
 					$("#copy-tree, #download-svg").prop("disabled", false);
