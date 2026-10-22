@@ -176,6 +176,7 @@ TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, col
 	if (!this.parent) return;
 
 	if (this.draw_triangle) {
+		ctx.beginPath();
 		ctx.moveTo(this.parent.x, this.parent.y + padding_below_text);
 		ctx.lineTo(this.x - this.left_width, this.y - font_size - padding_above_text);
 		ctx.lineTo(this.x + this.right_width, this.y - font_size - padding_above_text);
@@ -186,6 +187,7 @@ TreeNode.prototype.draw = function (ctx, font_size, term_font, nonterm_font, col
 
 	if (!this.has_children && !term_lines && this.parent.children.length == 1) return;
 
+	ctx.beginPath();
 	ctx.moveTo(this.parent.x, this.parent.y + padding_below_text);
 	ctx.lineTo(this.x, this.y - font_size - padding_above_text);
 	ctx.stroke();
@@ -321,6 +323,7 @@ MovementLine.prototype.draw = function (ctx) {
 		this.dest_x += 6;
 	}
 
+	ctx.beginPath();
 	ctx.moveTo(tail_x, this.tail.y + padding_below_text);
 	ctx.quadraticCurveTo(tail_x, this.bottom_y, (tail_x + this.dest_x) / 2, this.bottom_y);
 	ctx.quadraticCurveTo(this.dest_x, this.bottom_y, this.dest_x, this.dest_y + padding_below_text);
@@ -347,6 +350,9 @@ function SvgContext(width, height) {
 	this.font = "10px sans-serif";
 	this.fillStyle = "#000000";
 	this.strokeStyle = "#000000";
+	this.lineWidth = 1;
+	this.lineCap = "butt";
+	this.lineJoin = "miter";
 	this.textAlign = "start";
 }
 
@@ -423,12 +429,20 @@ SvgContext.prototype.closePath = function () {
 	this.path += "Z";
 };
 
-// The drawing code strokes without starting new paths, which a canvas tolerates by
-// stroking the same lines again. Here each stroke or fill takes only what was drawn since.
 SvgContext.prototype.stroke = function () {
 	if (!this.path) return;
 	this.parts.push(
-		'<path d="' + this.path + '" fill="none" stroke="' + svg_escape(this.strokeStyle) + '"/>'
+		'<path d="' +
+			this.path +
+			'" fill="none" stroke="' +
+			svg_escape(this.strokeStyle) +
+			'" stroke-width="' +
+			this.lineWidth +
+			'" stroke-linecap="' +
+			this.lineCap +
+			'" stroke-linejoin="' +
+			this.lineJoin +
+			'"/>'
 	);
 	this.path = "";
 };
@@ -525,6 +539,8 @@ function go(
 	// Draw at the screen's pixel density, then show the image at its normal size, so the
 	// tree stays sharp on high-DPI screens without taking up more room.
 	var scale = Math.max(1, window.devicePixelRatio || 1);
+	width = Math.ceil(width);
+	height = Math.ceil(height);
 	canvas.id = "canvas";
 	canvas.width = Math.ceil(width * scale);
 	canvas.height = Math.ceil(height * scale);
@@ -533,6 +549,10 @@ function go(
 	ctx.fillStyle = "rgb(255, 255, 255)";
 	ctx.fillRect(0, 0, width, height);
 	ctx.fillStyle = "rgb(0, 0, 0)";
+	// A little over a pixel, with rounded ends, so slanted lines don't look stepped.
+	ctx.lineWidth = 1.2;
+	ctx.lineCap = "round";
+	ctx.lineJoin = "round";
 	ctx.textAlign = "center";
 	var x_shift = Math.floor(root.left_width + margin);
 	var y_shift = Math.floor(font_size + margin);
@@ -545,8 +565,8 @@ function go(
 	if (as_svg) return ctx.to_svg();
 	// Swap out the image
 	var img = Canvas2Image.saveAsPNG(canvas, true);
-	img.width = Math.ceil(width);
-	img.height = Math.ceil(height);
+	img.width = width;
+	img.height = height;
 	return img;
 }
 

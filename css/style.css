@@ -361,7 +361,9 @@ body {
 	}
 }
 #image-goes-here img {
-	max-width: 100%;
+	/* Keep the border outside the image, so it's shown at the size it was drawn. */
+	box-sizing: content-box;
+	max-width: calc(100% - 2px);
 	height: auto;
 	border: 1px solid var(--bs-border-color);
 	border-radius: 6px;
