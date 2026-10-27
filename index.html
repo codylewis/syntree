@@ -644,24 +644,86 @@
 					}
 				}
 
-				// Every C head says whether its clause is a question.
-				var node = /\[([^\s\[\]]+)/g;
-				var c_lines = [];
-				while ((m = node.exec(str))) {
-					if (hidden_feature_re.test(m[1])) continue;
-					if (m[1].replace(/\^/, "").replace(/_\w*$/, "") != "C") continue;
-					var at = text.substring(0, m.index).split("\n").length;
-					if (c_lines.indexOf(at) == -1) c_lines.push(at);
+				// Every C head says whether its clause is a question, and in an embedded clause,
+				// whether it's finite. The labels of the open brackets show what's above each C.
+				// Features that aren't filled in yet, like C_[Q, finite], are read too, so the note
+				// can say which ones need a + or -.
+				var node = /\[([^\s\[\]]*)|\]/g;
+				var drafts = hide_draft_features(text);
+				var stack = [];
+				var q_lines = [];
+				var finite_lines = [];
+				var unsigned_lines = { Q: [], finite: [], "Q and finite": [] };
+				while ((m = node.exec(drafts))) {
+					if (m[0] == "]") {
+						stack.pop();
+						continue;
+					}
+					var features = {};
+					var unsigned = {};
+					var base = m[1]
+						.replace(/_\uE002*[\uE000\uE003]([^\uE001]*)\uE001/, function (match, inner) {
+							inner
+								.replace(/\uE002/g, "")
+								.split(",")
+								.forEach(function (f) {
+									if (/^[+-]Q$/.test(f)) features.Q = f[0];
+									else if (/^[+-]finite$/i.test(f)) features.finite = f;
+									else if (f == "Q") unsigned.Q = true;
+									else if (/^finite$/i.test(f)) unsigned.finite = true;
+								});
+							return "";
+						})
+						.replace(/\^/, "")
+						.replace(/_\w*$/, "");
+					if (base == "C") {
+						var missing = missing_features(features, is_embedded(stack.slice().reverse()));
+						var at = text.substring(0, m.index).split("\n").length;
+						if (missing.Q && !unsigned.Q && q_lines.indexOf(at) == -1) q_lines.push(at);
+						if (missing.finite && !unsigned.finite && finite_lines.indexOf(at) == -1)
+							finite_lines.push(at);
+						var key = unsigned.Q ? (unsigned.finite ? "Q and finite" : "Q") : unsigned.finite ? "finite" : null;
+						if (key && unsigned_lines[key].indexOf(at) == -1) unsigned_lines[key].push(at);
+					}
+					stack.push(base);
 				}
-				if (c_lines.length > 0)
+				if (q_lines.length > 0)
 					problems.push({
 						level: "info",
 						lines: true,
 						text:
 							"C on " +
-							line_list(c_lines) +
+							line_list(q_lines) +
 							", shown in red, needs [+Q] or [-Q], e.g. C_[+Q] or C_[-Q].",
 					});
+				if (finite_lines.length > 0)
+					problems.push({
+						level: "info",
+						lines: true,
+						text:
+							"C in an embedded clause on " +
+							line_list(finite_lines) +
+							", shown in red, needs [+finite] or [-finite], e.g. C_[-Q, +finite].",
+					});
+				var unsigned_examples = {
+					Q: "[+Q] or [-Q]",
+					finite: "[+finite] or [-finite]",
+					"Q and finite": "[-Q, +finite]",
+				};
+				for (var key in unsigned_lines)
+					if (unsigned_lines[key].length > 0)
+						problems.push({
+							level: "info",
+							lines: true,
+							text:
+								"C on " +
+								line_list(unsigned_lines[key]) +
+								", shown in red, needs a + or - on " +
+								key +
+								", e.g. " +
+								unsigned_examples[key] +
+								".",
+						});
 
 				var labels = {};
 				str.replace(new RegExp(hidden_feature_re.source, "g"), "").replace(/\[[^\s\[\]]*?_(\w+)(?=[\s\[\]])/g, function (match, label) {
@@ -994,7 +1056,7 @@
 			phrases.DP = "[DP [D' [D ] " + bar_phrase("N") + "]]";
 			phrases.PP = "[PP [P' [P' [P ] " + phrases.DP + "]]]";
 			phrases.TP = "[TP " + phrases.DP + " [T' [T ] " + phrases.VP + "]]";
-			phrases.CP = "[CP [C' [C_[Q] ] " + phrases.TP + "]]";
+			phrases.CP = "[CP [C' [C_[Q, finite] ] " + phrases.TP + "]]";
 
 			// Typing \0 gives ∅, an empty head, and typing \DP, \VP, \PP, \TP, \CP, \AdjP or \AdvP
 			// builds out that phrase with the cursor in its first head. Undo brings back

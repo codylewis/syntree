@@ -15,22 +15,87 @@ function index_font(font) {
 	});
 }
 
-// A [+Q] or [-Q] feature on a label, as in C_[+Q]. Spaces and line breaks are allowed around it,
-// as in "[C_\n  [-Q]". Its brackets aren't tree brackets, so before the brackets are read the
-// feature is swapped for stand-ins of the same length, with filler for any space, so positions in
-// the string still line up.
-var feature_re = /_\s*\[\s*([+-])\s*Q\s*\]/g;
-var hidden_feature_re = /_\uE002*\uE000([+-]Q)\uE001/;
+// Features on a label, as in C_[+Q] or C_[-Q, +finite]: [+Q] or [-Q], [+finite] or [-finite], or
+// one of each in either order. Finite can be in any case, as in [-Q, +Finite] or [-Q, -FINITE].
+// Spaces and line breaks are allowed around and inside them, as in "[C_\n  [-Q, +finite]". Their
+// brackets aren't tree brackets, so before the brackets are read the features are swapped for
+// stand-ins of the same length, with filler for any space, so positions in the string still line up.
+var feature_re = (function () {
+	var q = "[+-]\\s*Q";
+	var finite =
+		"[+-]\\s*" +
+		"finite".replace(/\w/g, function (c) {
+			return "[" + c + c.toUpperCase() + "]";
+		});
+	var list = q + "(?:\\s*,\\s*" + finite + ")?|" + finite + "(?:\\s*,\\s*" + q + ")?";
+	return new RegExp("_(\\s*)\\[(\\s*(?:" + list + ")\\s*)\\]", "g");
+})();
+var hidden_feature_re = /_\uE002*\uE000([^\uE001]*)\uE001/;
 
 function hide_features(str) {
-	return str.replace(feature_re, function (match, sign) {
-		var feature = "\uE000" + sign + "Q\uE001";
-		return "_" + new Array(match.length - feature.length).join("\uE002") + feature;
+	return str.replace(feature_re, function (match, gap, inner) {
+		return "_" + gap.replace(/\s/g, "\uE002") + "\uE000" + inner.replace(/\s/g, "\uE002") + "\uE001";
+	});
+}
+
+// Reads hidden features like "-Q,\uE002+Finite" into { Q: "-", finite: "+Finite" }. Q keeps just its
+// sign, and finite is kept in the case it was typed.
+function read_features(inner) {
+	var features = {};
+	inner
+		.replace(/\uE002/g, "")
+		.split(",")
+		.forEach(function (f) {
+			if (/Q$/.test(f)) features.Q = f[0];
+			else features.finite = f;
+		});
+	return features;
+}
+
+// Features as they're drawn and written out, Q first, e.g. "[-Q, +finite]".
+function feature_text(features) {
+	var parts = [];
+	if (features.Q) parts.push(features.Q + "Q");
+	if (features.finite) parts.push(features.finite);
+	return "[" + parts.join(", ") + "]";
+}
+
+// Also hides features that aren't filled in yet, like the [Q, finite] in C_[Q, finite], so
+// formatting keeps them on the label's line. They're marked with \uE003 rather than \uE000, since
+// the tree reads them as brackets.
+function hide_draft_features(str) {
+	return hide_features(str).replace(/_(\s*)\[([\w\s,+-]*)\]/g, function (match, gap, inner) {
+		if (!/\b(?:Q|finite)\b/i.test(inner)) return match;
+		return "_" + gap.replace(/\s/g, "\uE002") + "\uE003" + inner.replace(/\s/g, "\uE002") + "\uE001";
 	});
 }
 
 function show_features(str) {
-	return str.replace(/\uE000/g, "[").replace(/\uE001/g, "]").replace(/\uE002/g, "");
+	return str
+		.replace(/\uE000([^\uE001]*)\uE001/g, function (match, inner) {
+			return feature_text(read_features(inner));
+		})
+		.replace(/\uE003([^\uE001]*)\uE001/g, function (match, inner) {
+			var parts = inner.replace(/\uE002/g, " ").split(",");
+			return "[" + parts.map(function (part) {
+				return part.trim();
+			}).join(", ") + "]";
+		})
+		.replace(/\uE002/g, "");
+}
+
+// Whether a C head is in an embedded clause, given the labels above it, nearest first. Its own
+// C' and CP don't count, so a C is embedded if anything is above its CP.
+function is_embedded(ancestors) {
+	var i = 0;
+	while (i < ancestors.length && /^C'*P?$/.test(ancestors[i])) i++;
+	return i < ancestors.length;
+}
+
+// What a C head still needs: [+Q] or [-Q] always, and [+finite] or [-finite] in an embedded clause.
+function missing_features(features, embedded) {
+	features = features || {};
+	return { Q: !features.Q, finite: embedded && !features.finite };
 }
 
 function TreeNode() {
@@ -54,8 +119,8 @@ function TreeNode() {
 	this.tail_chain = null;
 	this.starred = null;
 	this.bracketed = false; // Written as [label ...] rather than as text.
-	this.feature = null; // A [+Q] or [-Q] feature, as in C_[+Q].
-	this.marked = false; // Drawn in red and bold as an empty node or a C without a feature.
+	this.features = null; // Features like [+Q] and [-finite], as in C_[+Q] or C_[-Q, +finite].
+	this.marked = false; // Drawn in red and bold as an empty node or a C missing a feature.
 }
 
 // A bracketed XP or head with nothing under it, like [D ]. An empty X' is fine.
@@ -63,13 +128,18 @@ TreeNode.prototype.is_empty = function () {
 	return this.bracketed && !this.has_children && this.value.indexOf("'") == -1;
 };
 
-// A C head that doesn't say whether its clause is a question, like [C that] or [C_ that].
+// A C head that doesn't say whether its clause is a question, like [C that] or [C_ that], or,
+// in an embedded clause, whether it's finite.
 TreeNode.prototype.lacks_feature = function () {
-	return this.bracketed && this.value.replace(/_$/, "") == "C" && !this.feature;
+	if (!this.bracketed || this.value.replace(/_$/, "") != "C") return false;
+	var ancestors = [];
+	for (var n = this.parent; n; n = n.parent) ancestors.push(n.value);
+	var missing = missing_features(this.features, is_embedded(ancestors));
+	return missing.Q || missing.finite;
 };
 
-// Marks empty nodes and C heads without [+Q] or [-Q] to be drawn in red and bold so they
-// stand out on screen.
+// Marks empty nodes and C heads missing [+Q] or [-Q], or [+finite] or [-finite] in an embedded
+// clause, to be drawn in red and bold so they stand out on screen.
 TreeNode.prototype.mark_problems = function () {
 	this.marked = this.is_empty() || this.lacks_feature();
 	for (var i = 0; i < this.children.length; i++) this.children[i].mark_problems();
@@ -617,9 +687,8 @@ function parse(str) {
 	var i = 1;
 	while (i < str.length && !/[\s\[\]]/.test(str[i])) i++;
 	n.value = str.substr(1, i - 1);
-	var feature = null;
-	n.value = n.value.replace(hidden_feature_re, function (match, f) {
-		feature = "[" + f + "]";
+	n.value = n.value.replace(hidden_feature_re, function (match, inner) {
+		n.features = read_features(inner);
 		return "";
 	});
 	n.value = n.value.replace(/\^/, function () {
@@ -631,8 +700,10 @@ function parse(str) {
 		if (n.label.search(/^\d+$/) != -1) n.index = n.label;
 		return "";
 	});
-	n.feature = feature;
-	if (feature) n.index = n.index ? feature + "," + n.index : feature;
+	if (n.features) {
+		var feature = feature_text(n.features);
+		n.index = n.index ? feature + "," + n.index : feature;
+	}
 	n.value = show_features(n.value);
 
 	while (/\s/.test(str[i])) i++;
@@ -660,7 +731,7 @@ function parse(str) {
 // Parse bracket notation loosely into a list of top-level nodes and text,
 // balancing any unmatched brackets first.
 function read_brackets(str) {
-	str = hide_features(str).replace(/^\s+/, "");
+	str = hide_draft_features(str).replace(/^\s+/, "");
 	var open = 0;
 	for (var i = 0; i < str.length; i++) {
 		if (str[i] == "[") open++;
