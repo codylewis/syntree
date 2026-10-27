@@ -15,9 +15,27 @@ function index_font(font) {
 	});
 }
 
+// A [+Q] or [-Q] feature on a label, as in C_[+Q]. Spaces and line breaks are allowed around it,
+// as in "[C_\n  [-Q]". Its brackets aren't tree brackets, so before the brackets are read the
+// feature is swapped for stand-ins of the same length, with filler for any space, so positions in
+// the string still line up.
+var feature_re = /_\s*\[\s*([+-])\s*Q\s*\]/g;
+var hidden_feature_re = /_\uE002*\uE000([+-]Q)\uE001/;
+
+function hide_features(str) {
+	return str.replace(feature_re, function (match, sign) {
+		var feature = "\uE000" + sign + "Q\uE001";
+		return "_" + new Array(match.length - feature.length).join("\uE002") + feature;
+	});
+}
+
+function show_features(str) {
+	return str.replace(/\uE000/g, "[").replace(/\uE001/g, "]").replace(/\uE002/g, "");
+}
+
 function TreeNode() {
 	this.value = null;
-	this.index = null; // A numeric label, drawn as a subscript after the value.
+	this.index = null; // A numeric label or a feature, drawn as a subscript after the value.
 	this.step = null; // Horizontal distance between children.
 	this.draw_triangle = null;
 	this.label = null; // Head of movement.
@@ -36,7 +54,8 @@ function TreeNode() {
 	this.tail_chain = null;
 	this.starred = null;
 	this.bracketed = false; // Written as [label ...] rather than as text.
-	this.marked = false; // Drawn in red and bold as an empty node.
+	this.feature = null; // A [+Q] or [-Q] feature, as in C_[+Q].
+	this.marked = false; // Drawn in red and bold as an empty node or a C without a feature.
 }
 
 // A bracketed XP or head with nothing under it, like [D ]. An empty X' is fine.
@@ -44,10 +63,16 @@ TreeNode.prototype.is_empty = function () {
 	return this.bracketed && !this.has_children && this.value.indexOf("'") == -1;
 };
 
-// Marks empty nodes to be drawn in red and bold so they stand out on screen.
-TreeNode.prototype.mark_empty = function () {
-	this.marked = this.is_empty();
-	for (var i = 0; i < this.children.length; i++) this.children[i].mark_empty();
+// A C head that doesn't say whether its clause is a question, like [C that] or [C_ that].
+TreeNode.prototype.lacks_feature = function () {
+	return this.bracketed && this.value.replace(/_$/, "") == "C" && !this.feature;
+};
+
+// Marks empty nodes and C heads without [+Q] or [-Q] to be drawn in red and bold so they
+// stand out on screen.
+TreeNode.prototype.mark_problems = function () {
+	this.marked = this.is_empty() || this.lacks_feature();
+	for (var i = 0; i < this.children.length; i++) this.children[i].mark_problems();
 };
 
 TreeNode.prototype.font = function (term_font, nonterm_font) {
@@ -480,10 +505,10 @@ function go(
 	color,
 	term_lines,
 	as_svg,
-	plain // Leave empty nodes unmarked, for copying and downloading.
+	plain // Leave problem nodes unmarked, for copying and downloading.
 ) {
 	// Clean up the string
-	str = str.replace(/^\s+/, "");
+	str = hide_features(str).replace(/^\s+/, "");
 	var open = 0;
 	for (var i = 0; i < str.length; i++) {
 		if (str[i] == "[") open++;
@@ -501,7 +526,7 @@ function go(
 	var root = parse(str);
 	root.set_siblings(null);
 	root.check_triangle();
-	if (!plain) root.mark_empty();
+	if (!plain) root.mark_problems();
 
 	var canvas;
 	var ctx;
@@ -584,7 +609,7 @@ function parse(str) {
 		str = str.replace(/^\s+/, "");
 		str = str.replace(/\s+$/, "");
 		str = str.replace(/\s*[\r\n\t]\s*/g, " ");
-		n.value = str;
+		n.value = show_features(str);
 		return n;
 	}
 
@@ -592,6 +617,11 @@ function parse(str) {
 	var i = 1;
 	while (i < str.length && !/[\s\[\]]/.test(str[i])) i++;
 	n.value = str.substr(1, i - 1);
+	var feature = null;
+	n.value = n.value.replace(hidden_feature_re, function (match, f) {
+		feature = "[" + f + "]";
+		return "";
+	});
 	n.value = n.value.replace(/\^/, function () {
 		n.starred = true;
 		return "";
@@ -601,6 +631,9 @@ function parse(str) {
 		if (n.label.search(/^\d+$/) != -1) n.index = n.label;
 		return "";
 	});
+	n.feature = feature;
+	if (feature) n.index = n.index ? feature + "," + n.index : feature;
+	n.value = show_features(n.value);
 
 	while (/\s/.test(str[i])) i++;
 	if (str[i] != "]") {
@@ -627,7 +660,7 @@ function parse(str) {
 // Parse bracket notation loosely into a list of top-level nodes and text,
 // balancing any unmatched brackets first.
 function read_brackets(str) {
-	str = str.replace(/^\s+/, "");
+	str = hide_features(str).replace(/^\s+/, "");
 	var open = 0;
 	for (var i = 0; i < str.length; i++) {
 		if (str[i] == "[") open++;
@@ -720,18 +753,22 @@ function format_brackets(str, indent_unit) {
 		return out + "\n" + indent + "]";
 	}
 
-	return read_brackets(str)
-		.map(function (part) {
-			return typeof part == "string" ? part : write_node(part, "");
-		})
-		.join("\n");
+	return show_features(
+		read_brackets(str)
+			.map(function (part) {
+				return typeof part == "string" ? part : write_node(part, "");
+			})
+			.join("\n")
+	);
 }
 
 // Put the whole tree on one line, e.g. "[S [NP This] [VP [V is] [^NP a wug]]]".
 function minify_brackets(str) {
-	return read_brackets(str)
-		.map(function (part) {
-			return typeof part == "string" ? part : write_inline(part);
-		})
-		.join(" ");
+	return show_features(
+		read_brackets(str)
+			.map(function (part) {
+				return typeof part == "string" ? part : write_inline(part);
+			})
+			.join(" ")
+	);
 }

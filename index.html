@@ -572,6 +572,13 @@
 				return false;
 			} // handler()
 
+			// "line 3", or "lines 3, 5 and 8".
+			function line_list(lines) {
+				return lines.length == 1
+					? "line " + lines[0]
+					: "lines " + lines.slice(0, -1).join(", ") + " and " + lines[lines.length - 1];
+			}
+
 			// Returns every problem with the input, most important first.
 			function check_input(str) {
 				if (/^\s*$/.test(str))
@@ -585,6 +592,10 @@
 					return [{ level: "error", text: "Start the tree with [ and a label, e.g. [S" }];
 
 				var problems = [];
+				// Features like [+Q] have brackets of their own, which aren't tree brackets. Line
+				// numbers come from the original text, since hiding a feature can take out line breaks.
+				var text = str;
+				str = hide_features(str);
 
 				// XPs and heads with nothing under them are drawn in red in the tree, so they're
 				// only summed up here. An empty X' is fine.
@@ -595,14 +606,11 @@
 				while ((m = empty.exec(str))) {
 					if (m[1].indexOf("'") != -1) continue;
 					count++;
-					var at = str.substring(0, m.index).split("\n").length;
+					var at = text.substring(0, m.index).split("\n").length;
 					if (lines.indexOf(at) == -1) lines.push(at);
 				}
 				if (count > 0) {
-					var list =
-						lines.length == 1
-							? "line " + lines[0]
-							: "lines " + lines.slice(0, -1).join(", ") + " and " + lines[lines.length - 1];
+					var list = line_list(lines);
 					problems.push({
 						level: "info",
 						lines: true,
@@ -617,7 +625,7 @@
 				var open = 0;
 				var line = 1;
 				for (var i = 0; i < str.length; i++) {
-					if (str[i] == "\n") line++;
+					if (text[i] == "\n") line++;
 					if (str[i] == "[") open++;
 					if (str[i] == "]") open--;
 					if (open < 0) {
@@ -636,8 +644,27 @@
 					}
 				}
 
+				// Every C head says whether its clause is a question.
+				var node = /\[([^\s\[\]]+)/g;
+				var c_lines = [];
+				while ((m = node.exec(str))) {
+					if (hidden_feature_re.test(m[1])) continue;
+					if (m[1].replace(/\^/, "").replace(/_\w*$/, "") != "C") continue;
+					var at = text.substring(0, m.index).split("\n").length;
+					if (c_lines.indexOf(at) == -1) c_lines.push(at);
+				}
+				if (c_lines.length > 0)
+					problems.push({
+						level: "info",
+						lines: true,
+						text:
+							"C on " +
+							line_list(c_lines) +
+							", shown in red, needs [+Q] or [-Q], e.g. C_[+Q] or C_[-Q].",
+					});
+
 				var labels = {};
-				str.replace(/\[[^\s\[\]]*?_(\w+)(?=[\s\[\]])/g, function (match, label) {
+				str.replace(new RegExp(hidden_feature_re.source, "g"), "").replace(/\[[^\s\[\]]*?_(\w+)(?=[\s\[\]])/g, function (match, label) {
 					labels[label] = true;
 				});
 				var tails = str.match(/<\w+>/g) || [];
@@ -826,14 +853,16 @@
 				if (!on) return;
 
 				var str = ta.value;
+				// Same length as str, with the brackets of features like [+Q] hidden.
+				var brackets = hide_features(str);
 				var matched = {};
 				if (match && document.activeElement == ta && ta.selectionStart == ta.selectionEnd) {
 					var partner = {};
 					var stack = [];
 					for (var i = 0; i < str.length; i++) {
-						if (str[i] == "[") {
+						if (brackets[i] == "[") {
 							stack.push(i);
-						} else if (str[i] == "]" && stack.length > 0) {
+						} else if (brackets[i] == "]" && stack.length > 0) {
 							var open = stack.pop();
 							partner[i] = open;
 							partner[open] = i;
@@ -873,10 +902,10 @@
 					}
 					var classes = [];
 					if (matched[i]) classes.push("bracket-match");
-					if (colors && (str[i] == "[" || str[i] == "]")) {
-						if (str[i] == "]") depth = Math.max(0, depth - 1);
+					if (colors && (brackets[i] == "[" || brackets[i] == "]")) {
+						if (brackets[i] == "]") depth = Math.max(0, depth - 1);
 						classes.push("bracket-" + (depth % 3));
-						if (str[i] == "[") depth++;
+						if (brackets[i] == "[") depth++;
 					}
 					if (classes.length) {
 						html += '<span class="' + classes.join(" ") + '">' + str[i] + "</span>";
@@ -965,7 +994,7 @@
 			phrases.DP = "[DP [D' [D ] " + bar_phrase("N") + "]]";
 			phrases.PP = "[PP [P' [P' [P ] " + phrases.DP + "]]]";
 			phrases.TP = "[TP " + phrases.DP + " [T' [T ] " + phrases.VP + "]]";
-			phrases.CP = "[CP [C' [C ] " + phrases.TP + "]]";
+			phrases.CP = "[CP [C' [C_[Q] ] " + phrases.TP + "]]";
 
 			// Typing \0 gives ∅, an empty head, and typing \DP, \VP, \PP, \TP, \CP, \AdjP or \AdvP
 			// builds out that phrase with the cursor in its first head. Undo brings back
@@ -1044,6 +1073,7 @@
 				var start = ta.selectionStart;
 				var line = ta.value.substring(ta.value.lastIndexOf("\n", start - 1) + 1, start);
 				var indent = line.match(/^[ \t]*/)[0];
+				line = hide_features(line);
 				var open = (line.match(/\[/g) || []).length - (line.match(/\]/g) || []).length;
 				var text = "\n" + indent + (open > 0 ? "  " : "");
 				var caret = start + text.length;
