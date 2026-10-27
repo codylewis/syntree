@@ -4,7 +4,7 @@ var debug = true;
 var margin = 15; // Number of pixels from tree to edge on each side.
 var padding_above_text = 6; // Lines will end this many pixels above text.
 var padding_below_text = 6;
-var index_scale = 0.65; // Size of a numeric index like the 1 in NP_1, relative to the label.
+var index_scale = 0.75; // Size of a numeric index like the 1 in NP_1, relative to the label.
 var index_drop = 0.25; // How far the index sits below the baseline, as a share of the font size.
 
 // The font for a node's index: the label's font at a smaller size. This takes the font as it
