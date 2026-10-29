@@ -407,7 +407,8 @@
 									<li><kbd>\0</kbd> ∅, an empty head</li>
 									<li>
 										<kbd>\DP</kbd>, <kbd>\VP</kbd>, <kbd>\PP</kbd>, <kbd>\AdjP</kbd>, <kbd>\AdvP</kbd>,
-										<kbd>\TP</kbd>, <kbd>\CP</kbd> Phrase templates
+										<kbd>\TPDP</kbd>, <kbd>\TPCP</kbd>, <kbd>\CPTPDP</kbd>, <kbd>\CPTPCP</kbd>
+										Phrase templates
 									</li>
 									<li>
 										<kbd>Shift</kbd>+<kbd>Enter</kbd> New line without indent
@@ -1044,7 +1045,10 @@
 
 			// Phrase skeletons for the \DP, \VP, ... shortcuts. DP, PP, TP and CP are built from
 			// the smaller phrases so the phrases inside them always match their own shortcuts.
-			// NP has no shortcut of its own, since it only appears inside a DP.
+			// NP has no shortcut of its own, since it only appears inside a DP. TP is named for its
+			// specifier, \TPDP or \TPCP, and CP for the TP it holds, \CPTPDP or \CPTPCP. There's no
+			// bare \TP or \CP, since typing its P would build it before the rest of the name could
+			// be typed. The CP inside \TPCP holds a \TPDP, so the phrases don't nest forever.
 			function bar_phrase(head) {
 				return "[" + head + "P [" + head + "' [" + head + "' [" + head + " ]]]]";
 			}
@@ -1055,12 +1059,20 @@
 			};
 			phrases.DP = "[DP [D' [D ] " + bar_phrase("N") + "]]";
 			phrases.PP = "[PP [P' [P' [P ] " + phrases.DP + "]]]";
-			phrases.TP = "[TP " + phrases.DP + " [T' [T ] " + phrases.VP + "]]";
-			phrases.CP = "[CP [C' [C_[Q, finite] ] " + phrases.TP + "]]";
+			function tp(spec) {
+				return "[TP " + spec + " [T' [T ] " + phrases.VP + "]]";
+			}
+			function cp(complement) {
+				return "[CP [C' [C_[Q, finite] ] " + complement + "]]";
+			}
+			phrases.TPDP = tp(phrases.DP);
+			phrases.CPTPDP = cp(phrases.TPDP);
+			phrases.TPCP = tp(phrases.CPTPDP);
+			phrases.CPTPCP = cp(phrases.TPCP);
 
-			// Typing \0 gives ∅, an empty head, and typing \DP, \VP, \PP, \TP, \CP, \AdjP or \AdvP
-			// builds out that phrase with the cursor in its first head. Undo brings back
-			// what was typed.
+			// Typing \0 gives ∅, an empty head, and typing \DP, \VP, \PP, \TPDP, \TPCP, \CPTPDP,
+			// \CPTPCP, \AdjP or \AdvP builds out that phrase with the cursor in its first head. Undo
+			// brings back what was typed.
 			function symbol_keypress(e) {
 				if (e.ctrlKey || e.metaKey || e.altKey) return true;
 				var ta = this;
@@ -1074,7 +1086,7 @@
 					return true;
 				}
 				if (ch != "P" && ch != "p") return true;
-				var m = /\\(Adj|Adv|V|D|P|T|C)$/i.exec(ta.value.substring(0, start));
+				var m = /\\(Adj|Adv|V|D|P|TPD|TPC|CPTPD|CPTPC)$/i.exec(ta.value.substring(0, start));
 				if (!m) return true;
 				var key = (m[1] + "p").toLowerCase();
 				var name = Object.keys(phrases).filter(function (k) {
