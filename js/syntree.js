@@ -4,7 +4,7 @@ var debug = true;
 var margin = 15; // Number of pixels from tree to edge on each side.
 var padding_above_text = 6; // Lines will end this many pixels above text.
 var padding_below_text = 6;
-var index_scale = 0.75; // Size of a numeric index like the 1 in NP_1, relative to the label.
+var index_scale = 0.75; // Size of an index like the 1 in NP_1, relative to the label.
 var index_drop = 0.25; // How far the index sits below the baseline, as a share of the font size.
 
 // The font for a node's index: the label's font at a smaller size. This takes the font as it
@@ -100,10 +100,10 @@ function missing_features(features, embedded) {
 
 function TreeNode() {
 	this.value = null;
-	this.index = null; // A numeric label or a feature, drawn as a subscript after the value.
+	this.index = null; // An index like the 1 in NP_1 or a feature, drawn as a subscript after the value.
 	this.step = null; // Horizontal distance between children.
 	this.draw_triangle = null;
-	this.label = null; // Head of movement.
+	this.label = null; // Head of movement, like the a in NP.a.
 	this.tail = null; // Tail of movement.
 	this.max_y = null; // Distance of the descendent of this node that is farthest from root.
 	this.children = new Array();
@@ -695,11 +695,16 @@ function parse(str) {
 		n.starred = true;
 		return "";
 	});
-	n.value = n.value.replace(/_(\w+)$/, function (match, label) {
-		n.label = label;
-		if (n.label.search(/^\d+$/) != -1) n.index = n.label;
-		return "";
-	});
+	// An index, as in NP_1, NP_i or DP_*i/j, is drawn after the value. It can hold anything but _
+	// and ., which start the next part. A movement label, as in NP.a, isn't drawn and is only where
+	// a <a> points. A node can have both, in either order: NP_i.a or NP.a_i.
+	for (var k = 0; k < 2; k++)
+		n.value = n.value.replace(/(?:_([^\s\[\]_.]+)|\.([^\W_]+))$/, function (match, index, label) {
+			if (index != null && n.index == null) n.index = index;
+			else if (label != null && n.label == null) n.label = label;
+			else return match;
+			return "";
+		});
 	if (n.features) {
 		var feature = feature_text(n.features);
 		n.index = n.index ? feature + "," + n.index : feature;

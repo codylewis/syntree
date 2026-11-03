@@ -7,7 +7,7 @@ The goal of this project is to create a browser-based, fully local syntax tree g
 - Adjustable appearance.
 - Linkable, i.e. parses the query string.
 
-For more details, see the [wiki](https://github.com/mshang/syntree/wiki).
+For more details, including indices, movement lines and shortcuts, see Help in the app.
 
 This fork can be found at <https://syntaxtree.codylewis.net/>. The original app is at <http://mshang.ca/syntree/>.
 

@@ -389,9 +389,11 @@
 									missing. Use Copy tree to paste the tree into a document, or
 									Copy link to share it. To save it as a file, right-click the
 									tree and choose "Save image as", or turn on Download SVG in
-									Options for a file that stays sharp at any size. For more
-									information, including on how to draw movement lines, visit the
-									<a href="https://github.com/mshang/syntree/wiki">wiki</a>.
+									Options for a file that stays sharp at any size. Add ^ to a label,
+									as in NP^, to draw a triangle over its words. Write NP_i, NP_1
+									or DP_*i/j to draw an index. For a movement line, mark where the
+									phrase lands with a name, as in NP.a, and write &lt;a&gt; where it
+									came from. A node can have both, as in NP_i.a.
 								</p>
 								<p>
 									This is a fork of
@@ -448,19 +450,19 @@
 										<button
 											type="button"
 											class="example"
-											data-example="[S [X_a Movement] [Y example &lt;a&gt;]]"
+											data-example="[S [X.a Movement] [Y example &lt;a&gt;]]"
 										>
-											[S [X_a Movement] [Y example &lt;a&gt;]]
+											[S [X.a Movement] [Y example &lt;a&gt;]]
 										</button>
 									</li>
 									<li>
 										<button
 											type="button"
 											class="example"
-											data-example="[CP [NP^_1 What] [C' [C_b did] [IP_2 [NP^ you] [I' [I tr&lt;b&gt;] [VP [V' [V eat] tr&lt;1&gt;]]]]]]"
+											data-example="[CP [NP^_1.a What] [C' [C.b did] [IP_2 [NP^ you] [I' [I tr&lt;b&gt;] [VP [V' [V eat] tr&lt;a&gt;]]]]]]"
 										>
-											[CP [NP^_1 What] [C' [C_b did] [IP_2 [NP^ you] [I' [I
-											tr&lt;b&gt;] [VP [V' [V eat] tr&lt;1&gt;]]]]]]
+											[CP [NP^_1.a What] [C' [C.b did] [IP_2 [NP^ you] [I' [I
+											tr&lt;b&gt;] [VP [V' [V eat] tr&lt;a&gt;]]]]]]
 										</button>
 									</li>
 								</ul>
@@ -676,7 +678,7 @@
 							return "";
 						})
 						.replace(/\^/, "")
-						.replace(/_\w*$/, "");
+						.replace(/(?:[_.][^\s\[\]_.]*)+$/, "");
 					if (base == "C") {
 						var missing = missing_features(features, is_embedded(stack.slice().reverse()));
 						var at = text.substring(0, m.index).split("\n").length;
@@ -746,7 +748,7 @@
 						base: m[1]
 							.replace(/_\uE002*[\uE000\uE003][^\uE001]*\uE001/, "")
 							.replace(/\^/, "")
-							.replace(/_\w*$/, ""),
+							.replace(/(?:[_.][^\s\[\]_.]*)+$/, ""),
 						children: 0,
 						line: text.substring(0, m.index).split("\n").length,
 					});
@@ -765,8 +767,9 @@
 							" needs a complement after its C head, e.g. \\TPDP.",
 					});
 
+				// Movement lines point to names like the a in NP.a.
 				var labels = {};
-				str.replace(new RegExp(hidden_feature_re.source, "g"), "").replace(/\[[^\s\[\]]*?_(\w+)(?=[\s\[\]])/g, function (match, label) {
+				str.replace(new RegExp(hidden_feature_re.source, "g"), "").replace(/\[[^\s\[\]]*?\.([^\W_]+)(?=[\s\[\]_]|$)/g, function (match, label) {
 					labels[label] = true;
 				});
 				var tails = str.match(/<\w+>/g) || [];
@@ -776,7 +779,7 @@
 						problems.push({
 							level: "warning",
 							text:
-								"No node is labelled _" +
+								"No node is labelled ." +
 								name +
 								" for " +
 								tails[i] +
