@@ -861,7 +861,9 @@
 
 			function tree_link() {
 				var loc = window.location.href.replace(window.location.search, "");
-				return loc + "?i=" + encodeURIComponent(document.getElementById("i").value);
+				// Minify only the link, leaving the editor's formatting alone.
+				var text = minify_brackets(document.getElementById("i").value);
+				return loc + "?i=" + encodeURIComponent(text);
 			}
 
 			function copy_link() {
