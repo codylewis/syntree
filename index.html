@@ -1204,9 +1204,9 @@
 
 			$(function () {
 				try {
-					var qs = decodeURIComponent(window.location.search.slice(1));
-					qs = qs.replace(/^i=/, "");
-					qs = qs.replace(/\+/g, " ");
+					// Turn + into spaces before decoding, so a literal + (sent as %2B) survives.
+					var qs = window.location.search.slice(1).replace(/\+/g, " ");
+					qs = decodeURIComponent(qs).replace(/^i=/, "");
 					if (qs == "") throw "";
 					document.getElementById("i").value = qs;
 				} catch (err) {}
