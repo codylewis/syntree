@@ -861,9 +861,11 @@
 
 			function tree_link() {
 				var loc = window.location.href.replace(window.location.search, "");
-				// Minify only the link, leaving the editor's formatting alone.
-				var text = minify_brackets(document.getElementById("i").value);
-				return loc + "?i=" + encodeURIComponent(text);
+				// Minify only the link, leaving the editor's formatting alone. f=1 tells the link to
+				// format the tree again when it opens, if it was on more than one line here.
+				var value = document.getElementById("i").value;
+				var link = loc + "?i=" + encodeURIComponent(minify_brackets(value));
+				return /\n/.test(value.trim()) ? link + "&f=1" : link;
 			}
 
 			function copy_link() {
@@ -1205,9 +1207,21 @@
 			$(function () {
 				try {
 					// Turn + into spaces before decoding, so a literal + (sent as %2B) survives.
-					var qs = window.location.search.slice(1).replace(/\+/g, " ");
-					qs = decodeURIComponent(qs).replace(/^i=/, "");
+					var params = {};
+					window.location.search
+						.slice(1)
+						.split("&")
+						.forEach(function (pair) {
+							var eq = pair.indexOf("=");
+							if (eq < 0) return;
+							var decode = function (part) {
+								return decodeURIComponent(part.replace(/\+/g, " "));
+							};
+							params[decode(pair.slice(0, eq))] = decode(pair.slice(eq + 1));
+						});
+					var qs = params.i || "";
 					if (qs == "") throw "";
+					if (params.f == "1") qs = format_brackets(qs);
 					document.getElementById("i").value = qs;
 				} catch (err) {}
 
