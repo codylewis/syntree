@@ -631,9 +631,9 @@ function go(
 			break;
 		}
 
-	// Draw at the screen's pixel density, then show the image at its normal size, so the
-	// tree stays sharp on high-DPI screens without taking up more room.
-	var scale = Math.max(1, window.devicePixelRatio || 1);
+	// Draw at least at 2x, or the screen's pixel density if higher, then show the image at its
+	// normal size, so the tree stays sharp on any screen without taking up more room.
+	var scale = Math.max(2, window.devicePixelRatio || 1);
 	width = Math.ceil(width);
 	height = Math.ceil(height);
 	canvas.id = "canvas";
