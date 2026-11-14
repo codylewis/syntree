@@ -343,6 +343,16 @@
 											for="line-numbers"
 											>Line numbers</label
 										>
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="head-final"
+											autocomplete="off"
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="head-final"
+											>Right-headed shortcuts</label
+										>
 									</div>
 								</div>
 								<div class="option-row">
@@ -410,7 +420,8 @@
 									<li>
 										<kbd>\DP</kbd>, <kbd>\VP</kbd>, <kbd>\PP</kbd>, <kbd>\AdjP</kbd>, <kbd>\AdvP</kbd>,
 										<kbd>\CP</kbd>, <kbd>\TPDP</kbd>, <kbd>\TPCP</kbd>
-										Phrase templates
+										Phrase templates, with heads after their complements under
+										Right-headed shortcuts in Options
 									</li>
 									<li>
 										<kbd>Shift</kbd>+<kbd>Enter</kbd> New line without indent
@@ -1095,23 +1106,31 @@
 			// \TPDP or \TPCP. There's no bare \TP, since typing its P would build it before the rest
 			// of the name could be typed. A CP, from \CP or in \TPCP, is left without a complement,
 			// and a | marks where the cursor goes, so the next shortcut, like \TPDP, can be typed
-			// right there. Until it is, the status warns about the blank.
-			function bar_phrase(head) {
-				return "[" + head + "P [" + head + "' [" + head + "' [" + head + " ]]]]";
+			// right there. Until it is, the status warns about the blank. With head_final, each head
+			// comes after its complement, as in [D' [NP ...] [D ]], while specifiers stay on the left.
+			function build_phrases(head_final) {
+				// A head and its complement, in the order the switch asks for.
+				function head_comp(head, comp) {
+					return head_final ? comp + " " + head : head + " " + comp;
+				}
+				function bar_phrase(head) {
+					return "[" + head + "P [" + head + "' [" + head + "' [" + head + " ]]]]";
+				}
+				var phrases = {
+					AdjP: bar_phrase("Adj"),
+					AdvP: bar_phrase("Adv"),
+					VP: bar_phrase("V"),
+					CP: "[CP [C' " + head_comp("[C_[Q, finite] ]", "|") + "]]",
+				};
+				phrases.DP = "[DP [D' " + head_comp("[D ]", bar_phrase("N")) + "]]";
+				phrases.PP = "[PP [P' [P' " + head_comp("[P ]", phrases.DP) + "]]]";
+				function tp(spec) {
+					return "[TP " + spec + " [T' " + head_comp("[T ]", phrases.VP) + "]]";
+				}
+				phrases.TPDP = tp(phrases.DP);
+				phrases.TPCP = tp(phrases.CP);
+				return phrases;
 			}
-			var phrases = {
-				AdjP: bar_phrase("Adj"),
-				AdvP: bar_phrase("Adv"),
-				VP: bar_phrase("V"),
-				CP: "[CP [C' [C_[Q, finite] ] |]]",
-			};
-			phrases.DP = "[DP [D' [D ] " + bar_phrase("N") + "]]";
-			phrases.PP = "[PP [P' [P' [P ] " + phrases.DP + "]]]";
-			function tp(spec) {
-				return "[TP " + spec + " [T' [T ] " + phrases.VP + "]]";
-			}
-			phrases.TPDP = tp(phrases.DP);
-			phrases.TPCP = tp(phrases.CP);
 
 			// Typing \0 gives ∅, an empty head, and typing \DP, \VP, \PP, \CP, \TPDP, \TPCP, \AdjP
 			// or \AdvP builds out that phrase with the cursor at its |, or else in its first head.
@@ -1132,6 +1151,7 @@
 				var m = /\\(Adj|Adv|V|D|P|C|TPD|TPC)$/i.exec(ta.value.substring(0, start));
 				if (!m) return true;
 				var key = (m[1] + "p").toLowerCase();
+				var phrases = build_phrases(document.getElementById("head-final").checked);
 				var name = Object.keys(phrases).filter(function (k) {
 					return k.toLowerCase() == key;
 				})[0];
@@ -1228,6 +1248,8 @@
 				try {
 					if (localStorage.getItem("line-numbers") == "on")
 						document.getElementById("line-numbers").checked = true;
+					if (localStorage.getItem("head-final") == "on")
+						document.getElementById("head-final").checked = true;
 				} catch (err) {}
 				show_slider_values();
 				show_theme(current_theme());
@@ -1265,6 +1287,11 @@
 				});
 				$("#i").scroll(sync_highlight);
 				$("#match-brackets, #indent-guides, #bracket-colors").change(highlight_brackets);
+				$("#head-final").change(function () {
+					try {
+						localStorage.setItem("head-final", this.checked ? "on" : "off");
+					} catch (err) {}
+				});
 				// The gutter narrows the text, which can rewrap it and change the editor's height.
 				$("#line-numbers").change(function () {
 					try {
