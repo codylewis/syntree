@@ -421,16 +421,20 @@ MovementLine.prototype.draw = function (ctx) {
 		this.dest_x += 6;
 	}
 
+	var tip_y = this.dest_y + padding_below_text;
+	var base_y = tip_y + 10;
+
+	// The line stops at the base of the arrowhead, so it doesn't stick out past the point.
 	ctx.beginPath();
 	ctx.moveTo(tail_x, this.tail.y + padding_below_text);
 	ctx.quadraticCurveTo(tail_x, this.bottom_y, (tail_x + this.dest_x) / 2, this.bottom_y);
-	ctx.quadraticCurveTo(this.dest_x, this.bottom_y, this.dest_x, this.dest_y + padding_below_text);
+	ctx.quadraticCurveTo(this.dest_x, this.bottom_y, this.dest_x, base_y);
 	ctx.stroke();
 	// Arrowhead
 	ctx.beginPath();
-	ctx.lineTo(this.dest_x + 3, this.dest_y + padding_below_text + 10);
-	ctx.lineTo(this.dest_x - 3, this.dest_y + padding_below_text + 10);
-	ctx.lineTo(this.dest_x, this.dest_y + padding_below_text);
+	ctx.moveTo(this.dest_x + 3, base_y);
+	ctx.lineTo(this.dest_x - 3, base_y);
+	ctx.lineTo(this.dest_x, tip_y);
 	ctx.closePath();
 	ctx.fillStyle = "#000000";
 	ctx.fill();
@@ -626,13 +630,11 @@ function go(
 
 	// Set up the canvas.
 	var width = root.left_width + root.right_width + 2 * margin;
-	var height = root.max_y + font_size + 2 * margin;
-	// Problem: movement lines may protrude from bottom.
+	// Movement lines can dip below the lowest node, so make room for the lowest one.
+	var bottom = root.max_y;
 	for (var i = 0; i < movement_lines.length; i++)
-		if (movement_lines[i].max_y == root.max_y) {
-			height += vert_space;
-			break;
-		}
+		if (movement_lines[i].should_draw) bottom = Math.max(bottom, movement_lines[i].bottom_y);
+	var height = bottom + font_size + 2 * margin;
 
 	// Draw at least at 2x, or the screen's pixel density if higher, then show the image at its
 	// normal size, so the tree stays sharp on any screen without taking up more room.
