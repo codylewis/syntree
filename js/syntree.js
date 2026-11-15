@@ -147,7 +147,10 @@ TreeNode.prototype.mark_problems = function () {
 
 TreeNode.prototype.font = function (term_font, nonterm_font) {
 	if (this.marked) return /\bbold\b/.test(nonterm_font) ? nonterm_font : "bold " + nonterm_font;
-	return this.has_children ? nonterm_font : term_font;
+	var font = this.has_children ? nonterm_font : term_font;
+	// A trace is always in italics.
+	if (this.value == "t" && !/\bitalic\b/.test(font)) font = "italic " + font;
+	return font;
 };
 
 TreeNode.prototype.set_siblings = function (parent) {
