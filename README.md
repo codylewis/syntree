@@ -11,6 +11,8 @@ For more details, including indices, movement lines and shortcuts, see Help in t
 
 This fork can be found at <https://syntaxtree.codylewis.net/>. The original app is at <http://mshang.ca/syntree/>.
 
+To run the tests, which need only [Node.js](https://nodejs.org/), run `node --test` in this folder.
+
 By the way, here are a few great alternatives:
 
 - [phpSyntaxTree](http://ironcreek.net/phpsyntaxtree/)
