@@ -710,7 +710,7 @@ function parse(str) {
 		});
 		str = str.replace(/^\s+/, "");
 		str = str.replace(/\s+$/, "");
-		str = str.replace(/\s*[\r\n\t]\s*/g, " ");
+		str = str.replace(/\s+/g, " ");
 		n.value = show_features(str);
 		return n;
 	}

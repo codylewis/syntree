@@ -71,9 +71,9 @@ test("parse reads labels, text and children", () => {
 	assert.equal(root.children[1].children[0].value, "sleeps");
 });
 
-test("parse joins the lines of a text node with single spaces", () => {
-	const root = tree("[NP the\n   big\tdog]");
-	assert.equal(root.children[0].value, "the big dog");
+test("parse joins the words of a text node with single spaces", () => {
+	const root = tree("[NP the\n   big\tdog  barks]");
+	assert.equal(root.children[0].value, "the big dog barks");
 });
 
 test("parse reads indices and movement labels in either order", () => {
