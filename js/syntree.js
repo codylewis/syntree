@@ -349,7 +349,18 @@ function MovementLine() {
 	this.max_y = null;
 	this.should_draw = null;
 	this.leftwards = null;
+	this.tail_shared = false; // Whether another line meets the tail's spot.
+	this.head_shared = false;
 }
+
+// Where the line starts and ends, as keys for counting the lines that meet there.
+MovementLine.prototype.tail_spot = function () {
+	return this.tail.x + "," + this.tail.y;
+};
+
+MovementLine.prototype.head_spot = function () {
+	return this.head.x + "," + this.head.max_y;
+};
 
 MovementLine.prototype.set_up = function () {
 	this.should_draw = 0;
@@ -414,12 +425,12 @@ MovementLine.prototype.find_intervening_height = function () {
 };
 
 MovementLine.prototype.draw = function (ctx) {
-	var tail_x = this.tail.x + 3;
-	this.dest_x -= 3;
-	if (this.leftwards) {
-		tail_x -= 6;
-		this.dest_x += 6;
-	}
+	// Where two lines meet, they sit side by side, toward the way each one goes, so they don't
+	// overlap. A line with its spot to itself is in the middle.
+	var shift = this.leftwards ? -3 : 3;
+	var tail_x = this.tail.x;
+	if (this.tail_shared) tail_x += shift;
+	if (this.head_shared) this.dest_x -= shift;
 
 	var tip_y = this.dest_y + padding_below_text;
 	var base_y = tip_y + 10;
@@ -626,6 +637,22 @@ function go(
 	for (var i = 0; i < movement_lines.length; i++) {
 		root.reset_chains();
 		movement_lines[i].set_up();
+	}
+	// Count the lines that meet at each spot, so a spot with just one can have it in the middle.
+	// A line into a head meets it under its lowest node, so it can share a spot with a line out of
+	// that node, as with [V.a ∅ <b>].
+	var line_ends = {};
+	for (var i = 0; i < movement_lines.length; i++) {
+		var m = movement_lines[i];
+		if (!m.should_draw) continue;
+		line_ends[m.tail_spot()] = (line_ends[m.tail_spot()] || 0) + 1;
+		line_ends[m.head_spot()] = (line_ends[m.head_spot()] || 0) + 1;
+	}
+	for (var i = 0; i < movement_lines.length; i++) {
+		var m = movement_lines[i];
+		if (!m.should_draw) continue;
+		m.tail_shared = line_ends[m.tail_spot()] > 1;
+		m.head_shared = line_ends[m.head_spot()] > 1;
 	}
 
 	// Set up the canvas.
