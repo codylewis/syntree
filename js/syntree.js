@@ -880,3 +880,32 @@ function minify_brackets(str) {
 			.join(" ")
 	);
 }
+
+// Take out the extra X' that the phrase templates leave for adjuncts wherever nothing was
+// adjoined to it, so "[AdjP [Adj' [Adj' [Adj tall]]]]" becomes "[AdjP [Adj' [Adj tall]]]". An X'
+// goes only when its one child is an X' with the same label. The tree is then formatted.
+function remove_extra_bars(str) {
+	function trim(node) {
+		while (
+			/'$/.test(node.label) &&
+			node.children.length == 1 &&
+			typeof node.children[0] != "string" &&
+			node.children[0].label == node.label
+		)
+			node = node.children[0];
+		node.children = node.children.map(function (child) {
+			return typeof child == "string" ? child : trim(child);
+		});
+		return node;
+	}
+
+	return format_brackets(
+		show_features(
+			read_brackets(str)
+				.map(function (part) {
+					return typeof part == "string" ? part : write_inline(trim(part));
+				})
+				.join(" ")
+		)
+	);
+}

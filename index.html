@@ -64,6 +64,14 @@
 							>
 						</div>
 						<div class="editor-tools">
+							<button
+								type="button"
+								id="remove-bars"
+								class="btn btn-sm btn-outline-secondary d-none"
+								title="Take out an X' wherever nothing was adjoined to it"
+							>
+								Remove extra X'
+							</button>
 							<div class="btn-group">
 								<button
 									type="button"
@@ -343,6 +351,16 @@
 											for="line-numbers"
 											>Line numbers</label
 										>
+										<input
+											type="checkbox"
+											class="btn-check"
+											id="show-remove-bars"
+											autocomplete="off"
+										/><label
+											class="btn btn-sm btn-outline-primary"
+											for="show-remove-bars"
+											>Remove extra X' button</label
+										>
 									</div>
 								</div>
 								<div class="option-row">
@@ -410,7 +428,8 @@
 									<li>
 										<kbd>\DP</kbd>, <kbd>\VP</kbd>, <kbd>\PP</kbd>, <kbd>\AdjP</kbd>, <kbd>\AdvP</kbd>,
 										<kbd>\CP</kbd>, <kbd>\TPDP</kbd>, <kbd>\TPCP</kbd>
-										Phrase templates
+										Phrase templates. Turn on Remove extra X' button in Options to take
+										out an X' that nothing was adjoined to.
 									</li>
 									<li>
 										<kbd>Shift</kbd>+<kbd>Enter</kbd> New line without indent
@@ -1283,9 +1302,13 @@
 				$(".redraw").change(function () {
 					return handler();
 				});
-				$("#format, #minify").click(function () {
+				$("#format, #minify, #remove-bars").click(function () {
 					var ta = document.getElementById("i");
-					var rewrite = this.id == "minify" ? minify_brackets : format_brackets;
+					var rewrite = {
+						format: format_brackets,
+						minify: minify_brackets,
+						"remove-bars": remove_extra_bars,
+					}[this.id];
 					ta.select();
 					insert_text(ta, rewrite(ta.value));
 					fit_editor(true);
@@ -1303,6 +1326,9 @@
 				$("#download-svg").click(download_svg);
 				$("#show-download-svg").change(function () {
 					$("#download-svg").toggleClass("d-none", !this.checked);
+				});
+				$("#show-remove-bars").change(function () {
+					$("#remove-bars").toggleClass("d-none", !this.checked);
 				});
 				$("#copy-link").click(copy_link);
 				$("#theme").click(toggle_theme);

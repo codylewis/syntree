@@ -208,6 +208,29 @@ test("format_brackets and minify_brackets undo each other", () => {
 	assert.equal(s.minify_brackets(s.format_brackets(str)), str);
 });
 
+test("remove_extra_bars takes out an X' that nothing was adjoined to", () => {
+	assert.equal(s.remove_extra_bars("[AdjP [Adj' [Adj' [Adj tall]]]]"), "[AdjP [Adj' [Adj tall]]]");
+	assert.equal(s.remove_extra_bars("[VP [V' [V' [V' [V eat]]]]]"), "[VP [V' [V eat]]]");
+	assert.equal(s.remove_extra_bars("[V' [V' eat]]"), "[V' eat]");
+});
+
+test("remove_extra_bars keeps an X' with an adjunct, and X' over a different X'", () => {
+	const adjunct = "[VP [V' [V' [V eat]] [AdvP [Adv' [Adv quickly]]]]]";
+	assert.equal(s.remove_extra_bars(adjunct), s.format_brackets(adjunct));
+	assert.equal(s.remove_extra_bars("[V' [N' [N dog]]]"), "[V' [N' [N dog]]]");
+});
+
+test("remove_extra_bars keeps features and formats the tree", () => {
+	assert.equal(
+		s.remove_extra_bars("[CP [C' [C' [C_[+Q] that]]]]"),
+		"[CP [C' [C_[+Q] that]]]"
+	);
+	assert.equal(
+		s.remove_extra_bars("[DP [D' [D the]] [NP [N' [N' [N dog]]]]]"),
+		"[DP\n  [D' [D the]]\n  [NP [N' [N dog]]]\n]"
+	);
+});
+
 test("go draws a tree as SVG", () => {
 	const out = svg("[S [NP Alice] [VP sleeps]]");
 	assert.match(out, /^<svg xmlns="http:\/\/www.w3.org\/2000\/svg"/);

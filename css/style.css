@@ -205,6 +205,7 @@ body {
 .editor-tools {
 	display: flex;
 	justify-content: flex-end;
+	gap: 6px;
 	margin-top: 8px;
 }
 /* On wide screens the right column fills the window with Options and Help pinned to the bottom,
